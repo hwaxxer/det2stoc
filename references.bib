@@ -1,0 +1,349 @@
+% --------------------------------------------------------
+% VI 
+% --------------------------------------------------------
+@article{jordan1999introduction,
+  title={An introduction to variational methods for graphical models},
+  author={Jordan, Michael I and Ghahramani, Zoubin and Jaakkola, Tommi S and Saul, Lawrence K},
+  journal={Machine learning},
+  volume={37},
+  number={2},
+  pages={183--233},
+  year={1999},
+  publisher={Springer}
+}
+
+% --------------------------------------------------------
+% VAE
+% --------------------------------------------------------
+@article{kingma2013auto,
+  title={Auto-encoding variational bayes},
+  author={Kingma, Diederik P and Welling, Max},
+  journal={arXiv preprint arXiv:1312.6114},
+  year={2013}
+}
+
+@article{Doersch2016,
+abstract = {In just three years, Variational Autoencoders (VAEs) have emerged as one of the most popular approaches to unsupervised learning of complicated distributions. VAEs are appealing because they are built on top of standard function approximators (neural networks), and can be trained with stochastic gradient descent. VAEs have already shown promise in generating many kinds of complicated data, including handwritten digits, faces, house numbers, CIFAR images, physical models of scenes, segmentation, and predicting the future from static images. This tutorial introduces the intuitions behind VAEs, explains the mathematics behind them, and describes some empirical behavior. No prior knowledge of variational Bayesian methods is assumed.},
+archivePrefix = {arXiv},
+arxivId = {1606.05908},
+author = {Doersch, Carl},
+doi = {10.3389/fphys.2016.00108},
+eprint = {1606.05908},
+file = {:home/hwasser/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Doersch - 2016 - Tutorial on Variational Autoencoders(2).pdf:pdf},
+isbn = {1532-4435},
+issn = {1664042X},
+keywords = {neural networks,structured prediction,unsupervised learning,variational autoencoders},
+mendeley-groups = {VAE},
+pmid = {27148061},
+title = {{Tutorial on Variational Autoencoders}},
+url = {http://arxiv.org/abs/1606.05908},
+year = {2016}
+}
+
+@techreport{Dieng2018,
+abstract = {Variational autoencoders (s) learn distributions of high-dimensional data. They model data by introducing a deep latent-variable model and then maximizing a lower bound of the log marginal likelihood. While s can capture complex distributions, they also suffer from an issue known as "latent variable collapse." Specifically, the lower bound involves an approximate posterior of the latent variables; this posterior "collapses" when it is set equal to the prior, i.e., when the posterior is independent of the data. While s learn good generative models, latent variable collapse prevents them from learning useful representations. In this paper, we propose a new way to avoid latent variable collapse. We expand the model class to one that includes skip connections; these connections enforce strong links between the latent variables and the likelihood function. We study these generative skip models both theoretically and empirically. Theoretically, we prove that skip models increase the mutual information between the observations and the inferred latent variables. Empirically, on both images (MNIST and Omniglot) and text (Yahoo), we show that genera-tive skip models lead to less collapse than existing architectures.},
+archivePrefix = {arXiv},
+arxivId = {1807.04863v1},
+author = {Dieng, Adji B and Kim, Yoon and Rush, Alexander M and Blei, David M},
+eprint = {1807.04863v1},
+file = {:home/hwasser/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Dieng et al. - 2018 - Avoiding Latent Variable Collapse with Generative Skip Models.pdf:pdf},
+mendeley-groups = {VAE},
+title = {{Avoiding Latent Variable Collapse with Generative Skip Models}},
+url = {https://arxiv.org/pdf/1807.04863.pdf},
+year = {2018}
+}
+
+@article{DBLP:journals/corr/DilokthanakulMG16,
+  author    = {Nat Dilokthanakul and
+               Pedro A. M. Mediano and
+               Marta Garnelo and
+               Matthew C. H. Lee and
+               Hugh Salimbeni and
+               Kai Arulkumaran and
+               Murray Shanahan},
+  title     = {Deep Unsupervised Clustering with Gaussian Mixture Variational Autoencoders},
+  journal   = {CoRR},
+  volume    = {abs/1611.02648},
+  year      = {2016},
+  url       = {http://arxiv.org/abs/1611.02648},
+  archivePrefix = {arXiv},
+  eprint    = {1611.02648},
+  timestamp = {Mon, 13 Aug 2018 16:46:56 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/DilokthanakulMG16},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+% --------------------------------------------------------
+% CVAEs
+% --------------------------------------------------------
+@inproceedings{kingma2014semi,
+  title={Semi-supervised learning with deep generative models},
+  author={Kingma, Diederik P and Mohamed, Shakir and Rezende, Danilo Jimenez and Welling, Max},
+  booktitle={Advances in Neural Information Processing Systems},
+  pages={3581--3589},
+  year={2014},
+  note={\url{https://papers.nips.cc/paper/5352-semi-supervised-learning-with-deep-generative-models}}
+}
+
+@article{Sohn2015,
+abstract = {Supervised deep learning has been successfully applied to many recognition prob-lems. Although it can approximate a complex many-to-one function well when a large amount of training data is provided, it is still challenging to model com-plex structured output representations that effectively perform probabilistic infer-ence and make diverse predictions. In this work, we develop a deep conditional generative model for structured output prediction using Gaussian latent variables. The model is trained efficiently in the framework of stochastic gradient varia-tional Bayes, and allows for fast prediction using stochastic feed-forward infer-ence. In addition, we provide novel strategies to build robust structured prediction algorithms, such as input noise-injection and multi-scale prediction objective at training. In experiments, we demonstrate the effectiveness of our proposed al-gorithm in comparison to the deterministic deep neural network counterparts in generating diverse but realistic structured output predictions using stochastic in-ference. Furthermore, the proposed training methods are complimentary, which leads to strong pixel-level object segmentation and semantic labeling performance on Caltech-UCSD Birds 200 and the subset of Labeled Faces in the Wild dataset.},
+author = {Sohn, Kihyuk and Lee, Honglak and Yan, Xinchen},
+doi = {10.1007/BF03255766},
+file = {:Users/hwaxxer/Library/Application Support/Mendeley Desktop/Downloaded/Sohn, Lee, Yan - 2015 - Learning Structured Output Representation using Deep Conditional Generative Models.pdf:pdf},
+issn = {10495258},
+journal = {Advances in Neural Information Processing Systems},
+mendeley-groups = {VAE},
+pages = {3483--3491},
+pmid = {444083},
+title = {{Learning Structured Output Representation using Deep Conditional Generative Models}},
+url = {https://papers.nips.cc/paper/5775-learning-structured-output-representation-using-deep-conditional-generative-models http://papers.nips.cc/paper/5775-learning-structured-output-representation-using-deep-conditional-generative-models},
+year = {2015}
+}
+
+% --------------------------------------------------------
+% Deep learning
+% --------------------------------------------------------
+
+@book{Goodfellow-et-al-2016,
+    title={Deep Learning},
+    author={Ian Goodfellow and Yoshua Bengio and Aaron Courville},
+    publisher={MIT Press},
+    note={\url{http://www.deeplearningbook.org}},
+    year={2016}
+}
+
+@article{Hornik1989,
+title = "Multilayer feedforward networks are universal approximators",
+journal = "Neural Networks",
+volume = "2",
+number = "5",
+pages = "359 - 366",
+year = "1989",
+issn = "0893-6080",
+doi = "https://doi.org/10.1016/0893-6080(89)90020-8",
+url = "http://www.sciencedirect.com/science/article/pii/0893608089900208",
+author = "Kurt Hornik and Maxwell Stinchcombe and Halbert White",
+keywords = "Feedforward networks, Universal approximation, Mapping networks, Network representation capability, Stone-Weierstrass Theorem, Squashing functions, Sigma-Pi networks, Back-propagation networks",
+abstract = "This paper rigorously establishes that standard multilayer feedforward networks with as few as one hidden layer using arbitrary squashing functions are capable of approximating any Borel measurable function from one finite dimensional space to another to any desired degree of accuracy, provided sufficiently many hidden units are available. In this sense, multilayer feedforward networks are a class of universal approximators."
+}
+
+@article{Cybenko1989,
+abstract = {In this paper we demonstrate that finite linear combinations of compositions of a fixed, univariate function and a set of affine functionals can uniformly approximate any continuous function ofn real variables with support in the unit hypercube; only mild conditions are imposed on the univariate function. Our results settle an open question about representability in the class of single hidden layer neural networks. In particular, we show that arbitrary decision regions can be arbitrarily well approximated by continuous feedforward neural networks with only a single internal, hidden layer and any continuous sigmoidal nonlinearity. The paper discusses approximation properties of other possible types of nonlinearities that might be implemented by artificial neural networks.},
+author = {Cybenko, G},
+doi = {10.1007/BF02551274},
+issn = {1435-568X},
+journal = {Mathematics of Control, Signals and Systems},
+month = {dec},
+number = {4},
+pages = {303--314},
+title = {{Approximation by superpositions of a sigmoidal function}},
+url = {https://doi.org/10.1007/BF02551274},
+volume = {2},
+year = {1989}
+}
+
+
+% --------------------------------------------------------
+% RL
+% --------------------------------------------------------
+
+@article{duan2016benchmarking,
+  title={Benchmarking Deep Reinforcement Learning for Continuous Control},
+  author={Duan, Yan and Chen, Xi and Houthooft, Rein and Schulman, John and Abbeel, Pieter},
+  journal={arXiv preprint arXiv:1604.06778},
+  year={2016}
+}
+
+@article{popov2017data,
+  title={Data-efficient Deep Reinforcement Learning for Dexterous Manipulation},
+  author={Popov, Ivaylo and Heess, Nicolas and Lillicrap, Timothy and Hafner, Roland and Barth-Maron, Gabriel and Vecerik, Matej and Lampe, Thomas and Tassa, Yuval and Erez, Tom and Riedmiller, Martin},
+  journal={arXiv preprint arXiv:1704.03073},
+  year={2017}
+}
+
+% --------------------------------------------------------
+% Sim to real
+% --------------------------------------------------------
+
+@inproceedings{Jakobi1995NoiseAT,
+  title={Noise and the Reality Gap: The Use of Simulation in Evolutionary Robotics},
+  author={Nick Jakobi and Phil Husbands and Inman Harvey},
+  booktitle={ECAL},
+  year={1995}
+}
+
+@article{Chebotar2018,
+abstract = {We consider the problem of transferring policies to the real world by training on a distribution of simulated scenarios. Rather than manually tuning the randomization of simulations, we adapt the simulation parameter distribution using a few real world roll-outs interleaved with policy training. In doing so, we are able to change the distribution of simulations to improve the policy transfer by matching the policy behavior in simulation and the real world. We show that policies trained with our method are able to reliably transfer to different robots in two real world tasks: swing-peg-in-hole and opening a cabinet drawer. The video of our experiments can be found at https://sites.google.com/view/simopt},
+archivePrefix = {arXiv},
+arxivId = {1810.05687},
+author = {Chebotar, Yevgen and Handa, Ankur and Makoviychuk, Viktor and Macklin, Miles and Issac, Jan and Ratliff, Nathan and Fox, Dieter},
+eprint = {1810.05687},
+file = {:home/hwasser/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Chebotar et al. - 2018 - Closing the Sim-to-Real Loop Adapting Simulation Randomization with Real World Experience.pdf:pdf},
+mendeley-groups = {Master},
+month = {oct},
+title = {{Closing the Sim-to-Real Loop: Adapting Simulation Randomization with Real World Experience}},
+url = {http://arxiv.org/abs/1810.05687},
+year = {2018}
+}
+
+
+@article{Antonova2017,
+abstract = {In this work we propose an approach to learn a robust policy for solving the pivoting task. Recently, several model-free continuous control algorithms were shown to learn successful policies without prior knowledge of the dynamics of the task. However, obtaining successful policies required thousands to millions of training episodes, limiting the applicability of these approaches to real hardware. We developed a training procedure that allows us to use a simple custom simulator to learn policies robust to the mismatch of simulation vs robot. In our experiments, we demonstrate that the policy learned in the simulator is able to pivot the object to the desired target angle on the real robot. We also show generalization to an object with different inertia, shape, mass and friction properties than those used during training. This result is a step towards making model-free reinforcement learning available for solving robotics tasks via pre-training in simulators that offer only an imprecise match to the real-world dynamics.},
+archivePrefix = {arXiv},
+arxivId = {1703.00472},
+author = {Antonova, Rika and Cruciani, Silvia and Smith, Christian and Kragic, Danica},
+eprint = {1703.00472},
+file = {:home/hwasser/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Antonova et al. - 2017 - Reinforcement Learning for Pivoting Task.pdf:pdf},
+mendeley-groups = {Master},
+month = {mar},
+title = {{Reinforcement Learning for Pivoting Task}},
+url = {http://arxiv.org/abs/1703.00472},
+year = {2017}
+}
+
+@article{peng,
+  author    = {Xue Bin Peng and
+               Marcin Andrychowicz and
+               Wojciech Zaremba and
+               Pieter Abbeel},
+  title     = {Sim-to-Real Transfer of Robotic Control with Dynamics Randomization},
+  journal   = {CoRR},
+  volume    = {abs/1710.06537},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1710.06537},
+  archivePrefix = {arXiv},
+  eprint    = {1710.06537},
+  timestamp = {Mon, 13 Aug 2018 16:47:23 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1710-06537},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{tobin,
+  author    = {Joshua Tobin and
+               Rachel Fong and
+               Alex Ray and
+               Jonas Schneider and
+               Wojciech Zaremba and
+               Pieter Abbeel},
+  title     = {Domain Randomization for Transferring Deep Neural Networks from Simulation
+               to the Real World},
+  journal   = {CoRR},
+  volume    = {abs/1703.06907},
+  year      = {2017},
+  url       = {http://arxiv.org/abs/1703.06907},
+  archivePrefix = {arXiv},
+  eprint    = {1703.06907},
+  timestamp = {Mon, 13 Aug 2018 16:48:26 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/TobinFRSZA17},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+
+% Tools
+
+@inproceedings{todorov2012mujoco,
+  title={MuJoCo: A physics engine for model-based control},
+  author={Todorov, Emanuel and Erez, Tom and Tassa, Yuval},
+  booktitle={Intelligent Robots and Systems (IROS), 2012 IEEE/RSJ International Conference on},
+  pages={5026--5033},
+  year={2012},
+  organization={IEEE}
+}
+
+@misc{tensorflow2015-whitepaper,
+title={ {TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
+url={https://www.tensorflow.org/},
+note={Software available from tensorflow.org},
+author={
+    Martín~Abadi and
+    Ashish~Agarwal and
+    Paul~Barham and
+    Eugene~Brevdo and
+    Zhifeng~Chen and
+    Craig~Citro and
+    Greg~S.~Corrado and
+    Andy~Davis and
+    Jeffrey~Dean and
+    Matthieu~Devin and
+    Sanjay~Ghemawat and
+    Ian~Goodfellow and
+    Andrew~Harp and
+    Geoffrey~Irving and
+    Michael~Isard and
+    Yangqing Jia and
+    Rafal~Jozefowicz and
+    Lukasz~Kaiser and
+    Manjunath~Kudlur and
+    Josh~Levenberg and
+    Dandelion~Mané and
+    Rajat~Monga and
+    Sherry~Moore and
+    Derek~Murray and
+    Chris~Olah and
+    Mike~Schuster and
+    Jonathon~Shlens and
+    Benoit~Steiner and
+    Ilya~Sutskever and
+    Kunal~Talwar and
+    Paul~Tucker and
+    Vincent~Vanhoucke and
+    Vijay~Vasudevan and
+    Fernanda~Viégas and
+    Oriol~Vinyals and
+    Pete~Warden and
+    Martin~Wattenberg and
+    Martin~Wicke and
+    Yuan~Yu and
+    Xiaoqiang~Zheng},
+  year={2015},
+}
+
+@article{kingma2014adam,
+  author    = {Diederik P. Kingma and
+               Jimmy Ba},
+  title     = {Adam: {A} Method for Stochastic Optimization},
+  journal   = {CoRR},
+  volume    = {abs/1412.6980},
+  year      = {2014},
+  url       = {http://arxiv.org/abs/1412.6980},
+  archivePrefix = {arXiv},
+  eprint    = {1412.6980},
+  timestamp = {Mon, 13 Aug 2018 16:47:35 +0200},
+  biburl    = {https://dblp.org/rec/bib/journals/corr/KingmaB14},
+  bibsource = {dblp computer science bibliography, https://dblp.org}
+}
+
+% Other
+
+@incollection{goodfellow2014,
+author = {Goodfellow, Ian and Pouget-Abadie, Jean and Mirza, Mehdi and Xu, Bing and Warde-Farley, David and Ozair, Sherjil and Courville, Aaron and Bengio, Yoshua},
+booktitle = {Advances in Neural Information Processing Systems 27},
+editor = {Ghahramani, Z and Welling, M and Cortes, C and Lawrence, N D and Weinberger, K Q},
+pages = {2672--2680},
+publisher = {Curran Associates, Inc.},
+title = {{Generative Adversarial Nets}},
+url = {http://papers.nips.cc/paper/5423-generative-adversarial-nets.pdf},
+year = {2014}
+}
+
+@Book{bishop:2006:PRML,
+  author = "Christopher M. Bishop",
+  title = "Pattern Recognition and Machine Learning",
+  publisher = "Springer",
+  year = "2006",
+}
+
+@article{Ba2016,
+abstract = {Training state-of-the-art, deep neural networks is computationally expensive. One way to reduce the training time is to normalize the activities of the neurons. A recently introduced technique called batch normalization uses the distribution of the summed input to a neuron over a mini-batch of training cases to compute a mean and variance which are then used to normalize the summed input to that neuron on each training case. This significantly reduces the training time in feed-forward neural networks. However, the effect of batch normalization is dependent on the mini-batch size and it is not obvious how to apply it to recurrent neural networks. In this paper, we transpose batch normalization into layer normalization by computing the mean and variance used for normalization from all of the summed inputs to the neurons in a layer on a single training case. Like batch normalization, we also give each neuron its own adaptive bias and gain which are applied after the normalization but before the non-linearity. Unlike batch normalization, layer normalization performs exactly the same computation at training and test times. It is also straightforward to apply to recurrent neural networks by computing the normalization statistics separately at each time step. Layer normalization is very effective at stabilizing the hidden state dynamics in recurrent networks. Empirically, we show that layer normalization can substantially reduce the training time compared with previously published techniques.},
+archivePrefix = {arXiv},
+arxivId = {1607.06450},
+author = {Ba, Jimmy Lei and Kiros, Jamie Ryan and Hinton, Geoffrey E.},
+eprint = {1607.06450},
+file = {:home/hwasser/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Ba, Kiros, Hinton - 2016 - Layer Normalization.pdf:pdf},
+mendeley-groups = {Master},
+month = {jul},
+title = {{Layer Normalization}},
+url = {http://arxiv.org/abs/1607.06450},
+year = {2016}
+}
