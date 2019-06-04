@@ -7,7 +7,7 @@ This chapter describes the motivation behind the proposed \dettostoc{}, and outl
 
 %Combining deep learning with physics-based modeling has several positive benefits.  
 
-Consider a physics simulator that correctly describes a dynamical system using laws of physics and mathematics. Since neural networks learn from experience, it is possible to learn the dynamics of this system and make accurate predictions given enough input and output samples.
+Consider a physics simulator that correctly describes a dynamical system using laws of physics and mathematics. Since neural networks learn from experience, it is possible to learn the dynamics of this system and make accurate predictions given enough input and output samples. According to the universal approximation theorem, a neural network with at least one hidden layer with a nonlinear activation function can approximate any smooth function with sufficient accuracy provided that there are enough hidden units in the layer \parencite{Hornik1989} \parencite{Cybenko1989}.
 
 %These networks are thus universal approximators, in their mapping of input vectors to output vectors, which is what makes them so useful for tasks in artificial intelligence. On the other hand, the sufficient number of hidden units of [26] is not guaranteed to be manageable computationally [27]. As is pointed out by Lin et al. in [27], the reason that a lot of neural network function approximations however indeed seem to work for a variety of tasks [25] is that the class of functions we are actually interested in is tiny, and essentially of low dimensionality, compared to the total collection of estimable functions.
 
@@ -15,47 +15,31 @@ General-purpose simulators like MuJoCo employ efficient dynamics models to make 
 
 %information from observed data, for example when there are unknown variables or parameters that cannot be measured, but we have observed data on how the system behaves.
 
-The idea is to train a \cvae{} using real data. But instead of starting from random encoder and decoder weights, we will first align the decoder function $\fdecoder{}$ with the output of an existing general-purpose simulator $\fsimulator{}$. Instead of adding noise to real-world observations, we introduce noise during simulation by collecting a set of trajectories using a range of simulation engine parameters $\psi$.
+The basic idea of this work is to train a \cvae{} using real data to produce a stochastic simulator, but as mentioned previously, this is not data-efficient. So, instead of starting from random encoder and decoder weights, we will first align the decoder function $\fdecoder{}$ with the output of an existing general-purpose simulator $\fsimulator{}$.
 
 Furthermore, real data comes with uncertainty. This uncertainty can be modelled with a generative model such as a \vae{}, and the slightly modified \cvae{} allows us to condition on current state. Moreover, we can use our prior knowledge in a bayesian manner to reason about sensible values that affect the environment.
 
-Domain and dynamics randomization are powerful techniques to reduce the reality gap. However, as shown with experiments in \parencite{Chebotar2018}, using wide distribution for randomization can cause infeasible solutions that hinder policy learning, or sub-optimal and conservative policies.
+Domain and dynamics randomization are powerful techniques to reduce the reality gap. However, as shown with experiments in \parencite{Chebotar2018}, using wide distribution for randomization can cause infeasible solutions that hinder policy learning, or sub-optimal and conservative policies. Instead of adding noise to observations, we introduce noise during simulation by collecting a set of trajectories using a range of simulation parameters $\psi$. 
 
 %Prior knowledge (parameters to affect environment) pre training
 
 \section{Proposed \dettostoc{} algorithm}
 \label{det2stoc:algorithm}
 
-Our approach specifies how existing general-purpose simulators could be used to make the learning of the stochastic function $g(\cdot)$ more data efficient. Finally the \cvae{} is trained on the \emph{real} data. We denote real observations $\trajreal$ and simulated observations $\trajsim$.
+Our approach specifies how existing general-purpose simulators could be used to make the learning of the stochastic function $g(\cdot)$ more data efficient. We denote real observations $\trajreal$ and simulated observations $\trajsim$. Algorithm \ref{alg:det2stoc} describes \dettostoc{} procedure.
 
-\todo[inline]{Make this prettier.}
-
-\begin{enumerate}[label=\textit{Step \arabic*}]
-    \item \label{det2stoc:step1} Choose relevant simulator parameter space $\vpsi$
-    \item \label{det2stoc:step2} Initialize $\vpsi$ (randomly or with initial estimates)
-    \item \label{det2stoc:step3} Sample from $\vpsi$ and train $\fdecoder{}$ to match output of $\fpsisimulator{}$ 
-    \item \label{det2stoc:step4} Train \cvae{} using pre-trained $\fdecoder{}$ with real observations $\trajreal$, keeping the first layer of the decoder frozen
-    % \item \label{det2stoc:step5} Compute $\vph_\mu$ and $\vph_\sigma$ for $\qphi \given{\vz}{\vns^{(real)}, \vs^{(real)}, \va^{(real)}}$.
-    %\item \label{det2stoc:step6} \emph{Evaluate log likelihood $\mathcal{L} = p \given{\vns^{(real)}}{\vs^{(real)}, \va^{(real)}, \vz}, \vz \sim \N(\vph_{\mu}, \vph_{\sigma})$. If $\mathcal{L}$ improves, go to step 2,  replacing previous simulation parameters with $\vph_{\mu}, \vph_{\sigma}$ learned with variational inference in \subref{det2stoc:step4}}
-    %^\item \label{det2stoc:step7} \emph{Train \cvae{} using real-world data.}
-
-    \item \label{det2stoc:step5} Go to \ref{det2stoc:step3}, replacing previous simulation parameters $\vpsi$ with the posterior $\vph_{\mu}$, $\vph_{\sigma}$ learned with variational inference in \ref{det2stoc:step4}
-\end{enumerate}
-
-
-%\begin{wrapfigure}{r}{1.0\textwidth}
-%\vspace{-2px}
+\vspace{\baselineskip}% Insert a blank line
 \begin{algorithm}[H]
 %  \LinesNumberedHidden
   \DontPrintSemicolon
-  $\trajreal \leftarrow$ collect real trajectories \;
+  $\trajreal \leftarrow$ collect real trajectories \; \label{det2stoc:step1}
   $\vpsi_0 \leftarrow$ initialize sim parameters \;
   \For{i $\in \{0, ..., N\}$}{
     $\trajsim_{\vpsi_i} \leftarrow$ collect sim trajectories from $\fsimulator{}(\vpsi_{i})$ \;
     %$\fdecoder{} \xleftarrow{}$ PreTrain($\trajsim$, $\vpsi_i$) \;
     $\ptheta \leftarrow$ train \fdecoder{} on $\trajsim_{\vpsi_i}$\;% \ptheta \given{\vns}{\vpsi_i, \vs, \va}$ \;
     %$f^{\cvae{}} \xleftarrow{}$ Train($\trajreal, \fdecoder{}$) with \fdecoder{} frozen\;
-    $\qphi \leftarrow$ train \cvae{} using frozen $\fdecoder{}$ on $\trajreal$ \;
+    $\qphi \leftarrow$ train \cvae{} on $\trajreal$ using frozen $\fdecoder{}$\;
     $\vph_{\mu, \sigma} \leftarrow$ compute posterior $\qphi$ given $\trajreal$\;% $\qphi \given{\vz}{\vs, \va, \vns} $\;%($\trajreal, f^{\cvae{}}$) \;
     $\vpsi_{i+1} \xleftarrow[]{} \vph_{\mu, \sigma}$ \;
     %update parameter distribution from posterior given $\trajreal$ \;
@@ -63,18 +47,15 @@ Our approach specifies how existing general-purpose simulators could be used to 
   \caption{det2stoc}
   \label{alg:det2stoc}
 \end{algorithm}
-%\vspace{-10px}
-%\end{wrapfigure}
+\vspace{\baselineskip}% Insert a blank line
+First, we collect trajectories $\trajreal$ from our real environment.
+Then, we choose a set of initial parameters that cannot be measured or that have uncertainty associated with them. We decide on an initial distribution $\vpsi_0$ for these parameters, typically an uninformative distribution, for example a uniform distribution or a wide truncated Gaussian distribution.
 
-In \ref{det2stoc:step1}, we choose a set of parameters $\vpsi$ that cannot be measured or that have uncertainty associated with them.
+In the beginning of each iteration $i$, we run simulations parameterized by samples from $\vpsi_i$ and collect trajectories $\trajsim_{\vpsi_i}=\{\vs, \va, \vns\}^{1:N}$. The decoder network $\fdecoder{}$ is pre-trained separately on the simulated data $\trajsim_{\vec{\psi_i}}{}$ to match $\fsimulator(\vpsi_i)$ using a negative log likelihood loss function. However, during this pre-training phase, instead of sampling $\vz$ from the posterior $\qphi$, the network is fed parameters $\vpsi$ used during simulation for that particular timestep $\fdecoder = f(\vpsi; \vth)$. The intention of this step is to train the decoder to capture how the simulation parameters $\vpsi$ affect the system dynamics.% which will infer parameters $\vpsi_{\mu,\sigma}$ that closely ressemble those of real-world dynamics.
 
-In \ref{det2stoc:step2} we decide on an initial distribution for these values, typically an uninformative distribution, for example a uniform distribution or a wide truncated normal distribution. 
+The \cvae{} is subsequently trained to match $\fpsisimulator{}$, but the decoder weights are kept frozen. The purpose of this step is to train the encoder to produce a posterior that maximizes the log likelihood of the next state $\vns$, while ensuring that the decoder does not catastrophically forget \parencite{French2006CatastrophicFI} what it learned during pretraining. The input to the encoder is state $\vs$, action $\va$ and next state $\vns$. %Including the next state ensures that there is enough information for the network to infer what parameter corresponds to which output.
 
-In \ref{det2stoc:step3}, we run simulations parameterized by samples from $\vpsi$ and collect trajectories $\trajsim_{\vpsi}=\{\vs, \va, \vns\}^{1:N}$. The decoder network is trained separately on the simulated data $\trajsim_{\vec{\psi}}{}$ using a negative log likelihood loss function. However, during this pre-training phase, instead of sampling $\vz$ from the prior or posterior, the network is fed parameters $\vpsi$ used during simulation for that particular timestep $\fdecoder = f(\vpsi; \vth)$. The intention of this step is to train the decoder to capture how the physics parameters affect the system dynamics which will infer parameters $\vpsi_\mu$, $\vpsi_\sigma$ that closely ressemble those of real-world dynamics.
-
-In \ref{det2stoc:step4}, the \cvae{} is trained to match $\fpsisimulator{}$, but the first layer of decoder weights is frozen. The purpose of this step is to train the encoder to produce a posterior that maximizes the log likelihood of the next state $\vns$, while ensuring that the decoder does not unlearn what it learned in \ref{det2stoc:step3}. The input to the encoder is state $\vs$, action $\va$ and next state $\vns$. %Including the next state ensures that there is enough information for the network to infer what parameter corresponds to which output.
-
-In \ref{det2stoc:step5}, we update $\vpsi$ with the posterior $\vph_{\mu,\sigma}$ and go back to \ref{det2stoc:step3}.
+Finally, we update our parameters $\vpsi_{i+1}$ with the posterior $\vph_{\mu, \sigma}$.
 
 This process can be repeated multiple times. The result of the \dettostoc{} algorithm is the trained decoder as well as the learned $\vph_{\mu, \sigma}$. Because of how the training procedure was set up, the network is now aligned with real world data.
 
@@ -389,18 +370,19 @@ Since the \cvae{} has the target $\vy$ in its posterior formulation, it is prone
 
 A learning rate of $1e^{-4}$ with a cosine decay is used to minimize the loss function using Adam \parencite{kingma2014adam}. We also employed early stopping for all parts of the training.
 
-\subsection{Parameter space}
 
-An important aspect of the method when using multiple parameters is to realize that the number of required samples increases exponentially with the number of parameters. It is crucial that the whole parameter space is covered for \dettostoc{} to be able to generalize to unseen data. Figure \ref{fig_parameter_space_3d} shows the parameter space in 3d for the Windy Slope scenario with friction, center of mass and wind.
+% \subsection{Parameter space}
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/parameter_space_3d}
-\caption{A well covered parameter space in 3d.}
-\label{fig_parameter_space_3d}
-\end{center}
-\todo[inline]{Not sure if this makes sense or is needed..}
-\end{figure}
+% An important aspect of the method when using multiple parameters is to realize that the number of required samples increases exponentially with the number of parameters. It is crucial that the whole parameter space is covered for \dettostoc{} to be able to generalize to unseen data. Figure \ref{fig_parameter_space_3d} shows the parameter space in 3d for the Windy Slope scenario with friction, center of mass and wind.
+
+% \begin{figure}
+% \begin{center}
+% \includegraphics[width=0.8\textwidth]{img/parameter_space_3d}
+% \caption{A well covered parameter space in 3d.}
+% \label{fig_parameter_space_3d}
+% \end{center}
+% \todo[inline]{Not sure if this makes sense or is needed..}
+% \end{figure}
 
 \chapter{Experimental results}
 \label{experiments}
@@ -682,28 +664,8 @@ Model & \# trajectories (samples) & Log likelihood  \\
 \label{fig:windyslope_logprob}
 \end{table}
 
-\begin{figure}
-
-\centering
-\captionsetup{size=footnotesize}
-\begin{subfigure}{\linewidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/iter0}
-  \caption{Initial estimates of $\psi$}
-  \label{fig_3_parameters_0}
-\end{subfigure}
-\begin{subfigure}{\linewidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/latent_encoding_iter3}
-  \caption{$\psi$ after 3rd iteration of \dettostoc{}}
-\end{subfigure}
-\caption{Plots show the learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\vec{\xi}^{real}$ as normalized histograms after 3 iterations of \dettostoc{}.
-From left-to-right, the latent space codings show tangential friction, center of mass and wind. %The prior parameters $\vpsi$ for each iteration of \dettostoc{} are included for clarity in a lighter color, along with the true distribution $\theta_{\mu, \sigma}$ in black dashes.}
-The \emph{real} distribution of the parameters $\theta_{\mu, \sigma}$ in drawn with black dashes.}
-\label{fig:windyslope_latent_space}
-
-\end{figure}
-
 We compare the results of \dettostoc{} against a \textbf{baseline} \cvae{} with the same number of layers and hidden units. This baseline \cvae{} is trained strictly on \emph{real} data and serves as an indication of the predictive performance without alignment with simulation data.
-The log likelihood of the test set gives an indication of the quality of the predictions, but it is not very useful in order to understand how accurate the predictions are. It is obvious that the log likelihood of \dettostoc{} is better than a \cvae{} baseline that has only trained on the \emph{real} data. So to instead better understand how \dettostoc{} performs, we compare it to the true underlying dynamics of the system $p \given{\vns}{\vs}$. To do this, we initialize the physics simulator with a fixed state $\vs$, sample from $\vec{\psi}^{(real)}$ and simulate passive dynamics to generate $\vns$. This will give us a probability distribution over the next state $\vns$ that we can compare to the results $\ptheta \given{\vns}{\vs}$ of the \cvae{}. The results for the position and linear velocity can be seen in \ref{fig:output_distribution_step1_posvel_dettostoc} and \ref{fig:output_distribution_baseline}. The full state observation visualization can be found in appendix \ref{appendix}.
+The log likelihood of the test set gives an indication of the quality of the predictions, but it is not very useful in order to understand how accurate the predictions are. It is obvious that the log likelihood of \dettostoc{} is better than a \cvae{} baseline that has only trained on the \emph{real} data. So to instead better understand how \dettostoc{} performs, we compare it to the true underlying dynamics of the system $p \given{\vns}{\vs}$. To do this, we initialize the physics simulator with a fixed state $\vs$, sample from $\vec{\psi}^{(real)}$ and simulate passive dynamics to generate $\vns$. This will give us a probability distribution over the next state $\vns$ that we can compare to the results $\ptheta \given{\vns}{\vs}$ of the \cvae{}. The results for the position and linear velocity can be seen in \ref{fig:output_distribution_step1_posvel_dettostoc} and \ref{fig:output_distribution_step50_posvel_baseline}. The full state observation visualization can be found in appendix \ref{appendix}.
 
 \begin{figure}
 \centering
@@ -737,48 +699,43 @@ The log likelihood of the test set gives an indication of the quality of the pre
 
 \end{figure}
 
-% \begin{figure}
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{img/windyslope/output/windyslope_boxplot}
-%     \caption{Output predictions for each state as boxplots.}% \todo{Label this properly}}
-%     \label{fig:my_label}
-% \end{figure}
-
 \subsection{Retrieving parameter predictions using latent space codes}
 
 As an experiment to see if \dettostoc{} can recover the parameters used by \fsimulator{}, we compute the expected mean and standard deviation of the posterior over the \emph{real} training set $\vec{\xi}^{(real)}_{train}$. Since we have included the target $\vns$ in the posterior formulation, and pre-trained the decoder to match \fsimulator{}, samples from $\qphi \given{\vz}{\vs, \vns}$ should approach the true parameters $\vth$. The results can be seen in Table \ref{fig_3_parameters_table} and visually in Figure \ref{fig:windyslope_latent_space}.
 %$\E_{\given{\vz}{\vs, \vns}}$
 
-\begin{table}
+\begin{table}[h!]
 \ra{1.3}
 \centering
 \begin{tabular}{lrcrrcrr}
 \toprule
 %& \multicolumn{2}{c}{\small\emph{Real}} & \phantom{a} & \multicolumn{2}{c}{\emph{Sim}} \\
 %\cmidrule{2-3} \cmidrule{5-6}
-& $\psi^{(initial)}$ && $\theta_\mu^{(true)}$ & $\phi_\mu^{(learned)}$ && $\theta_\sigma^{(true)}$ & $\phi_\sigma^{(learned)}$ \\
+& $\theta_\mu^{(true)}$ & $\phi_\mu^{(learned)}$ && $\theta_\sigma^{(true)}$ & $\phi_\sigma^{(learned)}$ \\
 \midrule
-$\pfriction$ & $\mathcal{U}$(0.1, 0.4) && 0.23 & 0.2329 && 0.01 & 0.0078 \\
-$\pcom$ & $\mathcal{U}$(-0.45, 0.45) && 0.21 & 0.3746 && 0.004 & 0.0188 \\
-$\pwind$ & $\mathcal{U}$(-0.5, 3.0) && -1.7 & -1.6949 && 0.05 & 0.0495 \\
+% $\N$(0.25, 0.1) 
+% $\N$(0, 0.2)
+% $\N$(-1, 1.0) 
+$\pfriction$ & 0.23 & 0.2308 && 0.01 & 0.0109 \\
+$\pcom$ & 0.11 & 0.1100 && 0.04 & 0.0370 \\
+$\pwind$ & -1.7 & -1.7153 && 0.05 & 0.2420 \\
 \bottomrule
 \end{tabular}
-\caption{Latent representations of parameters $\psi$ in the windy slope scenario after running two iterations of \dettostoc{} starting from uninformed priors for the parameters $\vec{\psi}$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\vec{\xi}^{real}$.}
+\caption{Latent representations of parameters $\vpsi$ in the windy slope scenario after running three iterations of \dettostoc{} starting from uninformed priors for the parameters $\vpsi$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\trajreal_{train}$.}
 \label{fig_3_parameters_table}
 \end{table}
 
-
-\begin{figure}
+\begin{figure}[h!]
 \centering
 \captionsetup{size=footnotesize}
 \begin{subfigure}{\linewidth}
   \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/iter0}
-  \caption{Initial estimates of $\psi$}
+  \caption{Initial estimates $\vpsi_0$}
   \label{fig_3_parameters_0}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
   \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/latent_encoding_iter3}
-  \caption{3rd iteration of \dettostoc{}}
+  \caption{3rd iteration of \dettostoc{} $\vpsi_3$}
 \end{subfigure}
 \caption{Plots show the learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\vec{\xi}^{real}$ as normalized histograms after 3 iterations of \dettostoc{}.
 From left-to-right, the latent space codings show tangential friction, center of mass and wind. %The prior parameters $\vpsi$ for each iteration of \dettostoc{} are included for clarity in a lighter color, along with the true distribution $\theta_{\mu, \sigma}$ in black dashes.}
@@ -786,7 +743,8 @@ The \emph{real} distribution of the parameters $\theta_{\mu, \sigma}$ in drawn w
 \label{fig:windyslope_latent_space}
 \end{figure}
 
-\subsection{YuMi pushing scenario}
+\clearpage
+\section{YuMi pushing scenario}
 
 A second scenario was constructed in MuJoCo that introduces control actions affecting the system dynamics. Similar to the Windy Slope scenario, a box with unknown center of mass is placed on a surface with unknown friction. However, inclination and wind have been removed and instead a robot interacts with the environment with the goal of pushing the box close to a target goal.
 
