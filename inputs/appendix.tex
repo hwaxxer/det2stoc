@@ -2,6 +2,25 @@
 \appendix
 \section{Misc Scratch}
 
-\subsection{Algorithm}
+\subsection{Algorithm Example}
 
-TODO
+\begin{wrapfigure}{r}{1.0\textwidth}
+\vspace{-2px}
+\begin{algorithm}[H]
+%  \LinesNumberedHidden
+  \DontPrintSemicolon
+  sample $\pmb{x}_1$ randomly, get $y_1 = f(\pmb{x}_1)$ from real world\;
+  initialize: $\pmb{D}_1 = \{ (\pmb{x}_1, y_1) \}$\;
+  \For{$n = 1,2, ... $}{
+     sample kernel function $k_n$ using Equation\;
+     get posterior GP mean and cov using $\pmb{D}_n$ \& Eq.\;
+     select $\pmb{x}_{n+1}$ by optimizing acquisition function $\alpha$:\;
+     $\quad \quad \quad \pmb{x}_{n+1}$;% = \argmax_{\pmb{x}} \alpha(\pmb{x}; \pmb{D}_n)$\;
+     get $y_{n+1} = f(\pmb{x}_{n+1})$ from real world\;
+     augment data $D_{n+1} = \pmb{D}_n \cup \{(\pmb{x}_{n+1}, y_{n+1})\}$
+  } % end for N robot trials
+  \caption{BO-BAK}
+  \label{alg:bo_bak}
+\end{algorithm}
+\vspace{-10px}
+\end{wrapfigure}

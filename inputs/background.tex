@@ -1,0 +1,357 @@
+
+\chapter{Background}
+\label{background}
+This chapter introduces the relevant theory required to follow the main aspects of the thesis. A deep conditional variational autoencoder (\cvae{}) was chosen to model the stochastic simulator. With that in mind, we start with a short introduction to deep learning and neural networks, and then move on to variational autoencoders (\vae{}) and variational inference. In the last part of the chapter we describe related work, specifically within the domains of transfer learning and Sim-to-Real.
+
+%A \emph{variational autoencoder} (\vae{}) was chosen to model a stochastic simulator. A \vae{} is a probabilistic model, but relatively similar in spirit to standard non-probabilistic autoencoder. Both the autoencoder and the \vae{} employ neural networks and with that in mind, a short introduction to deep learning will be given in this chapter before more detailed description of \vae{} on which the methodology for this project builds upon.
+
+\section{Deep neural networks}
+\subsection{Neural networks}
+The most basic form of neural network is a feedforward network, also known as a \emph{multilayer perceptron} (MLP). Feedforward networks constitute the foundation of deep learning and are in essence differentiable function approximators. That is, they approximate the function $\vy=f^{*}(\vx)$ using the mapping $\vy = f(\vx; \vth)$ and learn the parameters $\pmb{\theta}$ that best produce the desired output $\vy$.
+
+A feedforward network takes the form of a \textit{computational graph}. A computational graph is a directed graph where each node is either a variable, such as input, or an operation. These operations are called \emph{hidden units} or \emph{neurons}, and are organized in groups called \emph{layers}. The graph describes how the input flows through these layers.
+The feedforward network has a simple acyclic topology, or architecture, where all the nodes in one layer are connected to all the nodes in the next layer. An example can be seen in figure \ref{fig:mlp}.
+
+The edges in the graph correspond to weights and are learnable parameters $\vth$ of the network. As such, a feedforward network is simply a composite function parameterized by the weights of the graph that maps some set of input values to some corresponding set of output values, through layers of functions stacked on top of each other in a chain. For example, a feedforward network with two hidden layers $h^{(1)}$, $h^{(2)}$ as in figure \ref{fig:mlp} would form the function composition $f(\vx) = h^{(2)}\big(h^{(1)}(\vx)\big)$.
+
+Each hidden layer typically computes some affine transformation followed by a nonlinear transformation called \textit{activation function}. The nonlinearity of the activation functions is important as it increase the modeling capabilities of the network. Thus, adding more layers yields deeper and subsequently more powerful models, giving rise to the name \emph{deep} learning.
+%\begin{equation}
+%    a_j = \sum^D_{i=1} w^{(k)}_{j,i} x_i + b^{(k)}, \forall j=1\dotscM, \forall k=1 \dotsc K
+%\end{equation}
+
+%For some task, we want to predict the output $\boldsymbol{y}$ given some input $\vx$ and parameters $\boldsymbol{\theta}$. 
+
+\begin{figure}
+\captionsetup{width=.8\linewidth}
+\centering
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep*1.5, myarrow/.style={-Stealth}]
+    \scriptsize
+    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+    \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
+    \tikzstyle{input neuron}=[neuron];
+    \tikzstyle{output neuron}=[neuron];
+    \tikzstyle{hidden neuron}=[neuron];
+    \tikzstyle{annot} = [text width=4em, text centered]
+
+    % Draw the input layer nodes
+    \foreach \name / \y in {1,...,3}
+    % This is the same as writing \foreach \name / \y in {1/1,2/2,3/3,4/4}
+        \node[input neuron] (I-\name) at (0,-\y*1.5 cm) {$x_{\name}$};
+
+    % Draw the hidden layer nodes
+    \foreach \name / \y in {1,...,3}
+        \node[hidden neuron, right of=I-\name] (H1-\name) {$h^{(1)}_{\name}$};
+        
+    % Draw the hidden layer nodes
+    \foreach \name / \y in {1,...,3}
+        \node[hidden neuron, right of=H1-\name] (H2-\name) {$h^{(2)}_{\name}$};
+
+    % Draw the output layer node
+    \node[output neuron, right of=H2-2] (O) {$y$};
+
+    % Connect every node in the input layer with every node in the
+    % hidden layer.
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (I-\source) -- node[sloped] {} (H1-\dest);
+            
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (H1-\source) -- node[sloped] {} (H2-\dest);
+
+    % Connect every node in the hidden layer with the output layer
+    \foreach \source in {1,...,3}
+        \draw [myarrow] (H2-\source) -- node[sloped] {} (O);
+
+    %\normalsize
+    % Annotate the layers
+    % \node[annot,above of=H-1, node distance=1.5cm] (hl) {Hidden layer};
+    %\node[annot,left of=hl] {Input layer};
+    % \node[annot,right of=hl] {Output layer};
+    
+    \normalsize
+    \draw[decorate,decoration={brace,amplitude=6pt},-,thick,black]
+        ($(I-1.north west)+(-0.3,0.3)$) -- ($(I-1.north east)+(0.3,0.3)$) node [black,midway,yshift=1.0cm] {Input layer};
+
+    \draw[decorate,decoration={brace,amplitude=6pt},-,thick,black]
+        ($(H1-1.north west)+(-0.3,0.3)$) -- ($(H2-1.north east)+(0.3,0.3)$) node [black,midway,yshift=1.0cm] {Hidden layers};
+        
+    \draw[decorate,decoration={brace,amplitude=6pt},-,thick,black]
+        ($(O.north west)+(-0.3,\layersep+0.3)$) -- ($(O.north east)+(0.3,\layersep+0.3)$) node [black,midway,yshift=1.0cm] {Output layer};
+\end{tikzpicture}
+\caption{An example feedforward network with three inputs, one hidden layer with three units, and one output unit.}
+\label{fig:mlp}
+
+\end{figure}
+
+During training of a neural network, the input is propagated through the graph and produces some output passed to a cost function resulting in a scalar cost. This is called a forward pass. In contrast, a backwards pass allows for the cost to flow back through the network in order to produce a gradient of the loss function with respect to the parameters of the network. This is known as \emph{back-propagation} and is a fundamental algorithm for efficiently computing the chain rule. The weights of the network are then updated with \text{gradient descent}, which is the process of taking steps along the opposite direction of the gradient of the loss function. %The size of the steps taken is decided by the learning rate, which is a hyperparameter usually denoted $\alpha$. A hyperparameter is a parameter that is not learned during training and must be selected. The update equation for the parameters becomes: $\vth' = \vth - \alpha \nabla_{\vth} f(\vth)$. \todo{loss function gradient notation}
+
+%According to the universal approximation theorem, a neural network with at least one hidden layer with a nonlinear activation function can approximate any smooth function with sufficient accuracy provided that there are enough hidden units in the layer \parencite{Hornik1989} \parencite{Cybenko1989}.
+
+%optimization \parencite{Goodfellow-et-al-2016} which is the process of maximizing or minimizing some function. In the case of training a neural network, we wish to maximize or minimize an objective function. When the objective function should be minimized, it's often called the loss function.
+
+\section{Variational Autoencoder}
+
+\subsection{Autoencoding and Variational Inference}
+
+The autoencoder is a specific model trained to produce its own input. This model consists of two connected neural networks. The first network maps the input $\vx = (x_1, ..., x_D)$ to a latent output $\vz = (z_1, ..., z_K)$ and is called \emph{encoder}. The second network maps the latent vector to some output $\hat{\vx}$ and is called \emph{decoder}. Typically, the capacity of the network is limited through a bottleneck, which forces the autoencoder to learn a more compact and salient representation of the data. This makes autoencoders good at dimensionality reduction of data. The networks are trained jointly using a measure of reconstruction loss, for example the euclidean norm between the input $\vx$ and output $\hat{\vx}$.
+
+
+%\subsection{An intuitive approach}
+
+%To get an intuition for how VAEs work, we can pretend that we are trying to make a pizza. think of the latent variables as properties that describe the distribution we are trying to model. For example, if we are trying to generate a painting, maybe instead of starting from scratch we will decide what colors to use, whether to paint it with oil or acrylic, how thick the brush should be et cetera. Once we have an idea of these thoughts about how our painting should look, eg our prior, then it will be much clearer what kind of painting we are trying to produce. This is precisely what a VAE does. It tries to find latent variables z, eg our imagination of our painting, that are likely under X.
+
+%======================================================
+
+The variational autoencoder (\vae{}) is somewhat similar in structure to the autoencoder in the sense that it also has a structure that encodes and decodes the input. However, the \vae{} is a probabilistic generative model.
+
+% \subsection{Intuition behind Variational Autoencoders}*
+
+% Suppose we wish to write music. We might have a prior notion of how the song should. For example, perhaps we imagine a moody song with piano and through a creative and inherently random process, we then create the song with our ideas in mind. In this scenario, our imagination represents latent variables.
+
+The idea behind the generative process is to sample a vector of latent variables $\vz$ from some high-dimensional space $\mathcal{Z}$, and then have a family of deterministic functions $f(\vz;\theta)$, parameterized by $\theta$ in some space $\Theta$ such that $f: \mathcal{Z} \times \Theta \rightarrow \mathcal{X}$. If $f$ is a deterministic function, such as a neural network, $\theta$ is fixed and $\vz$ is random, then $f(\vz;\theta)$ is a random variable in the space of $\mathcal{X}$. The goal is then to optimize $\theta$ such that when we sample $\vz$ from $p(\vz)$ then $f(\vz;\theta)$ will correspond to the data $\vx$ with high probability.
+
+Consider a dataset consisting of $M$ independently and identically distributed (i.i.d) \textit{observed} samples: $\vx = \{\vx^{(i)}\}^M_{i=1}$. Assume that the dataset is generated by a process involving an \textit{unobserved}, or latent, variable $\vz$. This can be represented by a probabilistic graphical model (PGM) as illustrated in Figure \ref{fig_gm_vae}. The PGM factorizes into $\ptheta (\vx, \vz) = \ptheta (\vz) \ptheta \given{\vx}{\vz}$ and generative process can be described with two steps:
+
+\begin{itemize}
+    \item $\vz^{(i)}$ is generated from a \textit{prior} distribution $p_{\theta}(\vz)$
+    \item $\vx^{(i)}$ is generated from a conditional distribution $p_{\theta}\given{\vx}{\vz}$ called \textit{likelihood}
+\end{itemize}
+%
+The prior and the likelihood are assumed to be from some parametric distribution that is differentiable with respect to both $\theta$ and $\vz$. The true parameters $\theta$ are unknown.
+
+In order to infer the latent variables we need to compute the \textit{posterior} density
+\begin{equation}
+p_{\theta}\given{\vz}{\vx} = \frac{p_{\theta}\given{\vx}{\vz}p(\vz)}{p_{\theta}(\vx)}
+\end{equation}
+
+The term in the denominator is the \emph{marginal likelihood}
+\begin{equation}
+p_{\theta}(\vx) = \int p_{\theta}(\vz)p_{\theta}\given{\vx}{\vz} d\vz
+\label{eq:maximize_vae}
+\end{equation}
+
+and is assumed to be intractable. This means that finding the exact solution to the posterior is also intractable. To solve this problem, we attempt to approximate the posterior $\ptheta \given{\vz}{\vx}$ with a simpler distribution $\qphi \given{\vz}{\vx}$. This approach is the base of the Variational Inference methods, hence the name \textit{variational} autoencoder.
+
+\begin{figure}
+\begin{subfigure}{.3\textwidth}
+\centering
+\begin{tikzpicture}
+\node[latent] (z) {$\vz$};
+\node[obs, below=of z] (x) {$\vx$};
+\node[const, left=of z] (phi) {$\phi$};
+\node[const, right=of z] (theta) {$\theta$};
+\edge {z} {x} ; %
+\path (x) edge[->, dashed, bend left] (z) ;%
+
+\edge[shorten <=3pt, dashed] {phi} {z} ; %
+\edge[shorten <=3pt] {theta} {z} ; %
+\edge[shorten <=3pt] {theta} {x} ; %
+\plate[inner sep=0.3cm] {M} {(z)(x)} {$M$}; %
+\end{tikzpicture}
+\end{subfigure}
+\begin{subfigure}{.7\textwidth}
+%\captionsetup{width=.8\linewidth}
+\centering
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep, myarrow/.style={-Stealth}]
+    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+    \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
+    \tikzstyle{probabilistic neuron}=[circle,draw=black,ultra thick, fill=white!50,minimum size=30pt,inner sep=0pt]
+    \tikzstyle{input neuron}=[neuron];
+    \tikzstyle{output neuron}=[probabilistic neuron];
+    \tikzstyle{hidden neuron}=[neuron];
+    \tikzstyle{annot}=[text centered];
+
+    \scriptsize
+    % Draw the nodes
+    \foreach \name / \y in {1,...,3}
+        \node[input neuron] (I-\name) at (0,-\y*1.5 cm) {$x_{\y}$};
+
+    \foreach \name / \y in {1,...,3}
+        \node[hidden neuron, right of=I-\name] (he-\name) {$h^{(e)}_{\y}$};
+        
+    \foreach \name / \y in {1,...,2}
+        \node[probabilistic neuron, right of=he-\name, yshift=-0.5*\layersep] (z-\name) {$z_{\y}$};
+        
+    \foreach \name / \y in {1,...,3}
+        \node[hidden neuron, right of=he-\name, xshift=\layersep] (hd-\name)  {$h^{(d)}_{\y}$};
+
+    \foreach \name / \y in {1,...,3}
+        \node[output neuron, right of=hd-\name] (O-\name) {$\hat{x}_{\y}$};
+
+    % Connect every node
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (I-\source) -- node[sloped] {} (he-\dest);
+            
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,2}
+            \draw [myarrow] (he-\source) -- node[sloped] {} (z-\dest);
+            
+    \foreach \source in {1,...,2}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (z-\source) -- node[sloped] {} (hd-\dest);
+
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (hd-\source) -- node[sloped] {} (O-\dest);
+
+    %\normalsize
+    % Annotate the layers
+    \node[annot,below of=he-3, node distance=1.2cm] (encoder) {Encoder};% $q\given{z}{x}$};
+    %\node[annot,right of=i1] (hl) {Hidden layer};
+    \node[annot,below of=O-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
+
+    \begin{scope}[on background layer]
+        %\path[use as bounding box] (0,0) rectangle (10,10);
+        \draw[rounded corners=3pt,fill=curry!50]
+            ($(I-1.north west)+(-0.5,0.5)$) rectangle ($(he-3.south east)+(0.5,-1.2)$);
+        \draw[rounded corners=3pt,fill=moss!50]
+            ($(hd-1.north west)+(-0.5,0.5)$) rectangle ($(O-3.south east)+(0.5,-1.2)$);
+    \end{scope}
+\end{tikzpicture}
+\end{subfigure}
+\caption{Left: graphical model of a VAE. The solid lines represent the generative process, and the dashed lines represent the inference process. The rectangular plate notation means we can sample M times from $\vz$ and $\vx$ while keeping $\theta$ fixed. The dashed lines denote the encoding process. Right: a variational autoencoder network with one layer in both the encoder and decoder. The thick border denotes a probabilistic neuron.}
+\label{fig_gm_vae}
+%\caption{A very simple example autoencoder network with 4 input units, 2 hidden units and 4 output units.}
+%\label{fig_autoencoder}
+\end{figure}
+%\end{figure}
+
+The generative model maximizes Equation \ref{eq:maximize_vae}. If the choice of distribution is Gaussian, then
+\begin{equation}
+    p_{\theta}\given{\vx}{\vz} = \mathcal{N}\given{\vx}{f(\vz; \theta), \sigma^2 \times \mathbf{I}}
+\end{equation}
+
+That is, the likelihood $p_{\theta}\given{\vx}{\vz}$ has mean $\mu = f(\vz; \theta)$ and diagonal covariance $\Sigma = \sigma^2 \times \mathbf{I}$. This distribution can be modelled by a function approximator such as a neural network. If we model $p_{\theta}(\vz)$ as an uninformed Gaussian prior $\mathcal{N}(\boldsymbol{0}, \boldsymbol{I})$, we can take the gradient of the equation and and optimize it using gradient descent. However, it is generally intractable to simply sample from $\vz$ and compute $p(\vx) \approx \frac{1}{N}\sum_i^N p \given{\vx}{\vz^{(i)}}$ if $N$ is large. The reason for this is that for most $\vz^{(i)}$, $\ptheta \given{\vx}{\vz^{(i)}}$ will be very low, so the idea is to try to only sample instances of $\vz$ that are likely to have produced $\vx$.
+
+As mentioned previously, we can approach this problem with a new function $\qphi \given{\vz}{\vx}$ that finds values of $\vz$ that are much more likely under $\qphi$ than under $\ptheta$. We can express the desire to have $\vz$ produced under $\qphi \given{\vz}{\vx}$ to be similar to those produced under $\ptheta \given{\vz}{\vx}$ using the Kullbach-Liebler (KL) divergence measure (dropping the indices $\theta, \phi$ for brevity)
+
+\begin{equation}
+\begin{split}
+\KL{q \given{\vz}{\vx}}{p \given{\vz}{\vx}} &= \E_{q \given{\vz}{\vx} } \big [\log{q \given{\vz}{\vx}} - \log{p \given{\vz}{\vx}} \big ] \\
+%- \int p \given{\vz}{\vx} \log{p \given{\vz}{\vx}}d\vz - \\
+%& \quad \quad \big(- \int p \given{\vz}{\vx} \log{q \given{\vz}{\vx})}d\vz \big) \\
+%\E_{q \given{\vz}{\vx} } \big [\log{q \given{\vz}{\vx}} - \log{p \given{\vz}{\vx}} \big ] \\
+%&= \bigg{\{} \text{Expand $P(z|X)$ using Bayes' theorem \bigg{\}}} \\
+%&= \E_{q \given{\vz}{\vx} }\big {[} \log{Q(z|X)} - \big{(} \log{P(X|z)} + \log{P(z)} - \log{P(X)} \big{)} \big{]}\\
+&= \E_{q \given{\vz}{\vx} }\big {[} \log{q \given{\vz}{\vx})} - \overbrace{ \big{(} \log{p \given{\vx}{\vz}} + \log{p(z)} - \log{p(\vx)} \big{)} }^{\text{Expand $p\given{\vz}{\vx}$ using Bayes' theorem}} \big ]\\
+&= \E_{q \given{\vz}{\vx} } \big{[} \log{q \given{\vz}{\vx}} - \log{p \given{\vx}{\vz}} - \log{p(\vz)} \big{]} + \log{p(\vx)} \\
+&= \E_{q \given{\vz}{\vx} } \big{[} \KL{q \given{\vz}{\vx}}{p(\vz)} - \log{p \given{\vx}{\vz}} \big{]} + \log{p(\vx)}
+\end{split}
+\label{kl-eq}
+\end{equation}
+
+This gives the key equation to \vae{}s known as the Evidence Lower Bound (ELBO)
+
+\begin{align}
+%\log{P(X)} - D[Q(z|X) || P(z|X)] &= \E_{q \given{\vz}{\vx} } \big{[} \log{P(X|z)} + \log{P(z)} - \log{Q(z|X)} \big{]} \\
+\nonumber \lefteqn{\log{\ptheta(\vx)} - \KL{\qphi \given{\vz}{\vx}}{\ptheta \given{\vz}{\vx}}} \\
+& & & = \E_{\qphi \given{\vz}{\vx} } \big{[} \log{\ptheta \given{\vx}{\vz}} - \KL{\qphi \given{\vz}{\vx}}{\ptheta(\vz)} \big{]}
+%\end{split}
+\label{eq_vae}
+\end{align}
+
+Maximizing the left hand side of this equation means that we are maximizing $\log{\ptheta(\vx)}$ and subsequently minimizing an error term $\KL{\qphi \given{\vz}{\vx}}{\ptheta \given{\vz}{\vx}}$ since the KL divergence is always positive. The hope is that $\qphi \given{\vz}{\vx}$ will be very close to $\ptheta \given{\vz}{\vx}$, causing the divergence term to be zero, meaning we are directly optimizing $\log \ptheta(\vx)$. The right hand of the equation side looks much like an autoencoder. The first term can \emph{decode} $\vz$ into $\vx$, and the second term can \emph{encode} $\vx$ into $\vz$. This side of the equation can be optimized with gradient descent.
+
+Now we just need to figure out how to model $\qphi$. A common choice is a Gaussian distribution, $\qphi \given{\vz}{\vx} = \mathcal{N}\given{\vz}{\mu (\vx;\phi), \Sigma(\vx; \phi)}$, where $\phi$ are parameters learned from the data. This results in a KL divergence term that can be computed in closed form:
+
+\begin{align}
+\nonumber \lefteqn{\KL{\mathcal{N}(\mu_0, \Sigma_0)}{\mathcal{N}(\mu_1, \Sigma_1)} =} \\
+& & \frac{1}{2} \bigg{(} \text{tr}(\Sigma_1^{-1}\Sigma_0) + (\mu_1 - \mu_0)^\top)\Sigma_1^{-1}(\mu_1 - \mu_0) - k - \log \frac{\det \Sigma_1}{\det \Sigma_0}) \bigg{)}
+\label{kl-closed-form-eq1}
+\end{align}
+
+where $k$ is the dimension of the vector space. This is simplified if we assume an uninformative prior:
+
+\begin{align}
+\nonumber \lefteqn{ \KL{\mathcal{N}(\mu (\vx; \phi), \Sigma (X; \phi)}{ \mathcal{N}(\vec{0}, \vec{I})} =}\\
+& & \frac{1}{2} \bigg{(} \text{tr}(\Sigma (\vx; \phi)) + \mu (\vx; \phi)^\top \mu (\vx; \phi) - k - \log{\det{\Sigma (\vx; \phi)}} \bigg{)}
+\label{kl-closed-form-eq2}
+\end{align}
+
+The idea is to sample $\vz$ from $\qphi \given{\vz}{\vx}$ and compute $\log{ p_\theta \given{\vx}{\vz}}$ as an approximation of $\E_{\vz \sim \qphi} [\,\log{\ptheta \given{\vx}{z}}\,]$. The output of the encoder network $\qphi$ is a probability distribution, such as the mean and covariance of a Gaussian distribution $\vec{z} \sim \mathcal{N}\big(\mu_{\vz} (\vx; \phi), \Sigma_{\vz} (\vx; \phi)\big)$. However, stochastic units inside the network are not differentiable, and thus it is not possible to backpropagate the error with respect to the parameters of the distribution.
+
+To solve the problem of non-differentiable units, \parencite{kingma2013auto} suggested a ''trick'' that splits up the network into two parts. We sample an auxiliary variable $\epsilon = \N(\vec{0}, \vec{I})$ and reparameterize $\vz$ with a deterministic function $\vz=g(\vx, \epsilon)$. Assuming a Gaussian distribution over $\vz$, a valid reparameterization is $g(\vx, \epsilon) = \mu(\vx; \phi) + \Sigma(\vx; \phi) \times \epsilon$.
+Thus, we treat the stochastic $\epsilon$ as input which allows backpropagation with gradient descent and maximum likelihood estimates for $\phi$.
+%This means we can compute $\mathop{\mathbb{E}}_{\qphi \given{\vz}{\vx} } P(X|z,\theta)$ and simply need to find a way to make it as similar  
+
+
+\subsection{Conditional Variational Autoencoder}
+
+The Conditional Variational Autoencoder (\cvae{}) is a modification to the original \vae{} which allows for a deep conditional generative model. The \cvae{} models a distribution of the output space as a generative model conditioned on the the input observation. This is done by modulating the prior on the latent variables.
+
+The \cvae{} has a very similar structure to the \vae{} with a recognition network $\qphi \given{\vz}{\vx, \vy}$, a prior $\ptheta \given{\vz}{\vx}$ and a generative network $p_{\theta}\given{\vy}{\vx, \vz}$. The generative process is as follows: for input $\vx$, we sample from the prior distribution $\ptheta \given{\vz}{\vx}$ to generate the output $\vy$ from the distribution $\ptheta \given{\vy}{\vx, \vz}$.
+
+%The generative process of of the \cvae{} is to draw $\vz$ given the input $\vx$ from the prior distribution $p_{\theta}\given{\vz}{\vx}$, and the output is generated from a distribution $p_{\theta}\given{\vy}{\vx, \vz}$.
+
+%\subsection*{Variational lower bound of conditional log-likelihood}
+The variational lower bound for \cvae{} with the new output variable $\vy$ is reformulated as follows:
+
+\begin{equation}
+\begin{split}
+\log p_{\theta}\given{\vy}{\vx} &= \KL{q_{\theta}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}} + \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy, \vz}{\vx} \big ]
+\\
+&\geq \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy}{\vx, \vz} \big ]
+\\
+&= \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vz}{\vx} \big ] + \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ]
+\\
+&= -\KL{q_{\phi}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}} + \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ]
+\label{eq_cvae}
+\end{split}
+\end{equation}
+
+% \subsection{VAE latent spaces}
+% \subsubsection{Disentanglement with VAE}
+
+
+%\subsection*{Learning to predict structured output}
+
+In general, \vae{}s are used to \emph{autoencode} its input, and maximizing the ELBO is effective in training deep generative models. However, the same training may not be suitable to predict structured output for a \cvae{}. This is because during training of the \cvae{}, the output $\vy$ is fed as input to the encoder $q_{\theta}\given{\vz}{\vx, \vy}$. As such, the objective during training can be seen as a \emph{reconstruction} of $\vy$. However, during testing or inference, it uses the prior network $p_{\theta}\given{\vz}{\vx}$ to draw samples $\vz$ and \emph{predict} $\vy$. Prediction is considered a harder problem than reconstruction \parencite{Sohn2015}. Sohn et al discuss allocating more weight on the negative KL divergence term in the objective to reduce the gap between the latent encoding during training and testing. They find that this does not yield good results and instead propose to train the \cvae{} in a way that makes the predictions consistent during training and testing. This proposal introduces a objective for a model they call \emph{Gaussian Stochastic Neural Network} (GSNN).
+
+
+\begin{equation}
+\begin{split}
+\mathcal{L}_{\text{GSNN}}(\vx, \vy, \vth, \vph) = \frac{1}{N} \sum_{n=1}^N \log p_\theta \given{\vy}{\vx, \vz^{(n)}}
+\\
+\vz^{(n)} = g_{\theta}(\vx, \epsilon^{(n)}), \epsilon^{(n)} \sim \mathcal{N}(\pmb{0}, \mathbf{I})
+\end{split}
+\end{equation}
+This is then combined with the standard \cvae{} objective to form a hybrid objective with a scaling term $\alpha$:
+\begin{equation}
+\mathcal{L}_{\text{hybrid}} = \alpha \mathcal{L}_{\text{CVAE}} + (1 - \alpha) \mathcal{L}_{\text{GSNN}}
+\end{equation}
+
+\section{Transfer learning and sim-to-real}
+\subsection{Domain and dynamics randomization}
+
+A powerful and simple approach to transferring RL policies from simulation to the real world is to introduce uncertainty during training. The purpose is to provide enough simulated variability during training such that at test time the model is able to generalize to real-world data. Uncertainty can be applied to the dynamics of the system \parencite{Antonova2017}\parencite{peng} or the domain itself \parencite{tobin}. Both approaches attempt to reduce the discrepancies between simulation and the real world in order to produce more robust policies that learn to generalize to the domain and dynamics of the real world without physically training in it. 
+
+By introducing random noise to the parameters of the simulator that affect the dynamics of the system during training, \parencite{Antonova2017} and \parencite{peng} show that it is possible to develop policies that are capable of adapting to very different dynamics, even including ones that differ significantly from the dynamics on which the policies were trained.
+
+The approach by \parencite{tobin} is similar and focuses on randomizing the domain rather than the dynamics. In their work, they train using images as input and randomize the rendering of the simulator. This randomization includes colors and textures of objects, position and orientation of the camera, number of lights in the scene and the type and amount of random noise added to the images.
+
+\subsection{Approaches for Sim-to-Real adjustment}
+\todo[inline]{Write this.}
+\subsubsection*{MAML}
+
+\subsubsection*{Progressive nets}
+Tries to address data efficiency.
+
+Mention Elastic weight consolidation but doesn't address data efficiency.
+\subsubsection*{Closing the Sim-to-Real Loop}
+Not training a neural net to match. They're using simulator as a black box. Can utilize extra latent space when training on real data. det2stoc can be extended with extra latent varaibles after det2stoc
+
+
+
+% \chapter{Related work}
+% \label{relatedwork}
+
+%The work completed as part of the thesis project touches on two topics: the task of system identification and Sim-to-Real transfer. None of the mentioned topics are considered solved problems and are the subject of intense research. This chapter briefly summarizes the work done in each of these domains and discusses the benefits and drawbacks of available solutions.
+
+
+
+% \section{Semi/fully labeled to provide supervision for encoding latent variables}
+
+% In semi-supervised learning, both labeled examples from p(x,y) and unlabeled from p(x) are used to estimated p(y|x). The goal is to learn a representation so that examples from the same class have similar representations. If the examples cluster tightly in the input space they should be mapped to similar representations.
+
