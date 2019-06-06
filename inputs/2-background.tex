@@ -132,9 +132,9 @@ p_{\theta}(\vx) = \int p_{\theta}(\vz)p_{\theta}\given{\vx}{\vz} d\vz
 and is assumed to be intractable. This means that finding the exact solution to the posterior is also intractable. To solve this problem, we attempt to approximate the posterior $\ptheta \given{\vz}{\vx}$ with a simpler distribution $\qphi \given{\vz}{\vx}$. This approach is the base of the Variational Inference methods, hence the name \textit{variational} autoencoder.
 
 \begin{figure}
-\begin{subfigure}{.3\textwidth}
 \centering
 \begin{tikzpicture}
+\tikzstyle{node}=[node distance=0.2cm and 0.2cm]
 \node[latent] (z) {$\vz$};
 \node[obs, below=of z] (x) {$\vx$};
 \node[const, left=of z] (phi) {$\phi$};
@@ -147,74 +147,83 @@ and is assumed to be intractable. This means that finding the exact solution to 
 \edge[shorten <=3pt] {theta} {x} ; %
 \plate[inner sep=0.3cm] {M} {(z)(x)} {$M$}; %
 \end{tikzpicture}
-\end{subfigure}
-\begin{subfigure}{.7\textwidth}
+\caption{A graphical model of a VAE. The solid lines represent the generative process, and the dashed lines represent the inference process. The rectangular plate notation means we can sample M times from $\vz$ and $\vx$ while keeping $\theta$ fixed. The dashed lines denote the encoding process.}
+\end{figure}
+
+\begin{figure}
 %\captionsetup{width=.8\linewidth}
 \centering
-\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep, myarrow/.style={-Stealth}]
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, myarrow/.style={-Stealth}]
     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
-    \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
+    \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=\nodesize,inner sep=0pt,node distance=\nodesep and \layersep]
     \tikzstyle{input neuron}=[neuron];
-    \tikzstyle{output neuron}=[neuron];
+    \tikzstyle{output neuron}=[neuron,minimum size=\smallnodesize,node distance=\smallnodesep and \layersep];
     \tikzstyle{hidden neuron}=[neuron];
-    \tikzstyle{annot}=[text centered];
+    \tikzstyle{annot}=[text centered, node distance=0.4cm];
 
     \scriptsize
     % Draw the nodes
-    \foreach \name / \y in {1,...,3}
-        \node[input neuron] (I-\name) at (0,-\y*1.5 cm) {$x_{\y}$};
+    \node[input neuron] (I-1) at (0,0) {$x_1$};
+    \foreach \name [count=\i] in {2,3}
+        \node[input neuron, below=of I-\i] (I-\name) {$x_{\name}$};
 
-    \foreach \name / \y in {1,...,3}
-        \node[hidden neuron, right of=I-\name] (he-\name) {$h^{(e)}_{\y}$};
+    \node[hidden neuron, right=of I-1, yshift=-0.5*\nodesize-0.5*\nodesep] (he-1) {$h^{(e)}_1$};
+    \node[hidden neuron, below=of he-1] (he-2) {$h^{(e)}_2$};
         
-    \foreach \name / \y in {1,...,2}
-        \node[hidden neuron, right of=he-\name, yshift=-0.5*\layersep] (z-\name) {$z_{\y}$};
-        
-    \foreach \name / \y in {1,...,3}
-        \node[hidden neuron, right of=he-\name, xshift=\layersep] (hd-\name)  {$h^{(d)}_{\y}$};
+    \node[output neuron, right=of he-1, yshift=-0.5*\smallnodesize-0.5*\smallnodesep] (eo-1) {$\mu$};
+    \node[output neuron, below=of eo-1] (eo-2) {$\sigma$};
 
-    \foreach \name / \y in {1,...,3}
-        \node[output neuron, right of=hd-\name] (O-\name) {$\hat{x}_{\y}$};
+    \node[hidden neuron, right=of I-2, xshift=\nodesize+\smallnodesize+2*\layersep] (z) {$z$};
+        
+    \node[hidden neuron, right=of z, yshift=0.5*\nodesize+0.5*\nodesep] (hd-1) {$h^{(d)}_1$};
+    \node[hidden neuron, below=of hd-1] (hd-2) {$h^{(d)}_2$};
+
+    \node[output neuron, right=of hd-1, yshift=3*\nodesep / \smallnodesep *\smallnodesep] (do-1) {$\mu_1$};
+    \foreach \name [count=\i] in {2,3}
+        \node[output neuron, below=of do-\i] (do-\name) {$\mu_\name$};
+   \foreach \name [count=\i] in {4,...,6}
+        \node[output neuron, below=of do-3, yshift=\smallnodesize+\smallnodesep-\i*\smallnodesize - \i*\smallnodesep] (do-\name) {$\sigma_\i$};
+        
+    \foreach \name in {1,2,3}
+        \node[hidden neuron, right=of I-\name, xshift=3*\nodesize+2*\smallnodesize+5*\layersep] (O-\name) {$\hat{x}_{\name}$};
 
     % Connect every node
     \foreach \source in {1,...,3}
-        \foreach \dest in {1,...,3}
+        \foreach \dest in {1,...,2}
             \draw [myarrow] (I-\source) -- node[sloped] {} (he-\dest);
             
-    \foreach \source in {1,...,3}
+    \foreach \source in {1,...,2}
         \foreach \dest in {1,...,2}
-            \draw [myarrow,dashed] (he-\source) -- node[sloped] {} (z-\dest);
+            \draw [myarrow] (he-\source) -- node[sloped] {} (eo-\dest);
             
     \foreach \source in {1,...,2}
-        \foreach \dest in {1,...,3}
-            \draw [myarrow] (z-\source) -- node[sloped] {} (hd-\dest);
+        \draw [myarrow,dashed] (eo-\source) -- node[sloped] {} (z);
+    
+    \foreach \dest in {1,...,2}
+        \draw [myarrow] (z) -- node[sloped] {} (hd-\dest);
+
+    \foreach \source in {1,...,2}
+        \foreach \dest in {1,...,6}
+            \draw [myarrow] (hd-\source) -- node[sloped] {} (do-\dest);
 
     \foreach \source in {1,...,3}
-        \foreach \dest in {1,...,3}
-            \draw [myarrow,dashed] (hd-\source) -- node[sloped] {} (O-\dest);
+        \draw [myarrow,dashed] (do-\source) -- node[sloped] {} (O-\source);
+    \foreach \source [count=\i] in {4,...,6}
+        \draw [myarrow,dashed] (do-\source) -- node[sloped] {} (O-\i);
 
-    %\normalsize
-    % Annotate the layers
-    \node[annot,below of=he-3, node distance=1.2cm] (encoder) {Encoder};% $q\given{z}{x}$};
-    %\node[annot,right of=i1] (hl) {Hidden layer};
-    \node[annot,below of=hd-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
+    \node[annot,below right=of he-2] (encoder) {Encoder};% $q\given{z}{x}$};
+    \node[annot,below=of hd-2, yshift=-0.75cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
 
     \begin{scope}[on background layer]
-        %\path[use as bounding box] (0,0) rectangle (10,10);
         \draw[rounded corners=3pt,fill=curry!50]
-            ($(he-1.north west)+(-0.5,0.5)$) rectangle ($(he-3.south east)+(0.5,-1.2)$);
+            ($(he-1.north west)+(-0.4,0.5)$) rectangle ($(eo-2.south east)+(0.3,-1.2)$);
         \draw[rounded corners=3pt,fill=moss!50]
-            ($(hd-1.north west)+(-0.5,0.5)$) rectangle ($(hd-3.south east)+(0.5,-1.2)$);
+            ($(do-1.north west)+(-2,0.5)$) rectangle ($(do-6.south east)+(0.3,-0.5)$);
     \end{scope}
 \end{tikzpicture}
-\end{subfigure}
-\caption{Left: graphical model of a VAE. The solid lines represent the generative process, and the dashed lines represent the inference process. The rectangular plate notation means we can sample M times from $\vz$ and $\vx$ while keeping $\theta$ fixed. The dashed lines denote the encoding process. Right: a variational autoencoder network with one layer in both the encoder and decoder. Dashed arrows denote samples from probabilistic neurons.}
+\caption{A variational autoencoder network with two layers in both the encoder and decoder and one latent variable $z$. Dashed arrows denote samples from probabilistic neurons, in this example both posterior and likelihood are Gaussian.}
 \label{fig_gm_vae}
-%\caption{A very simple example autoencoder network with 4 input units, 2 hidden units and 4 output units.}
-%\label{fig_autoencoder}
 \end{figure}
-%\end{figure}
-
 The generative model maximizes Equation \ref{eq:maximize_vae}. If the choice of distribution is Gaussian, then
 \begin{equation}
     p_{\theta}\given{\vx}{\vz} = \mathcal{N}\given{\vx}{f(\vz; \theta), \sigma^2 \times \mathbf{I}}

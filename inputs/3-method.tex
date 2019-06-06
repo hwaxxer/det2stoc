@@ -63,7 +63,7 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep and \nodesep, myarrow/.style={-Stealth}]
+\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\nodesep and \layersep, myarrow/.style={-Stealth}]
     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
     \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
     \tikzstyle{probabilistic neuron}=[circle,draw=black,ultra thick, fill=white!50,minimum size=30pt,inner sep=0pt]
@@ -75,35 +75,35 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \scriptsize
     % Draw the nodes
     \node[input neuron] (I-1) at (0,0) {$x_1$};
-    \node[input neuron, below of=I-1] (I-2) {$x_2$};
-    \node[input neuron, below of=I-2] (I-3) {$y_1$};
-    \node[input neuron, below of=I-3] (I-4) {$y_2$};
+    \node[input neuron, below=of I-1] (I-2) {$x_2$};
+    \node[input neuron, below=of I-2] (I-3) {$y_1$};
+    \node[input neuron, below=of I-3] (I-4) {$y_2$};
         
-    \node[hidden neuron, right of=I-1, yshift=-0.5*\layersep] (he-1) {};
-    \node[hidden neuron, below of=he-1] (he-2) {};
-    \node[hidden neuron, below of=he-2] (he-3) {};
+    \node[hidden neuron, right=of I-1, yshift=-0.5*(\nodesep+\nodesize)] (he-1) {$h^{(e)}_1$};
+    \node[hidden neuron, below=of he-1] (he-2) {$h^{(e)}_2$};
+    \node[hidden neuron, below=of he-2] (he-3) {$h^{(e)}_3$};
         
-    \node[hidden neuron, right of=he-1, yshift=-.5*\layersep] (mu) {$\mu$};
-    \node[hidden neuron, below of=mu] (sigma) {$\sigma$};
+    \node[hidden neuron, right=of he-1, yshift=-0.5*(\nodesize+\nodesep)] (mu) {$\mu$};
+    \node[hidden neuron, below=of mu] (sigma) {$\sigma$};
         
     %\foreach \name / \y in {1,...,2}
-    \node[hidden neuron, right of=mu] (z-1) {$z$};
+    \node[hidden neuron, right=of mu] (z-1) {$z$};
     
-    \node[hidden neuron, above of=z-1] (psi-1) {$\psi$};
+    \node[hidden neuron, above=of z-1] (psi-1) {$\psi$};
 
-    \node[input neuron, below of=z-1] (c-1) {$x_1$};
-    \node[input neuron, below of=c-1] (c-2) {$x_2$};
+    \node[input neuron, below=of z-1] (c-1) {$x_1$};
+    \node[input neuron, below=of c-1] (c-2) {$x_2$};
 
     \foreach \name in {1,...,3}
-        \node[hidden neuron, right of=he-\name, xshift=2*\layersep] (hd-\name) {};
+        \node[hidden neuron, right=of he-\name, xshift=2*\layersep + 2*\nodesize] (hd-\name) {$h^{(d)}_\name$};
 
-    \node[hidden neuron, right of=I-1, xshift=4*\layersep] (O-1) {$\mu_1$};
-    \node[hidden neuron, below of=O-1] (O-2) {$\mu_2$};
-    \node[hidden neuron, below of=O-2] (O-3) {$\sigma_1$};
-    \node[hidden neuron, below of=O-3] (O-4) {$\sigma_2$};
+    \node[hidden neuron, right=of I-1, xshift=4*\layersep + 4*\nodesize] (O-1) {$\mu_1$};
+    \node[hidden neuron, below=of O-1] (O-2) {$\mu_2$};
+    \node[hidden neuron, below=of O-2] (O-3) {$\sigma_1$};
+    \node[hidden neuron, below=of O-3] (O-4) {$\sigma_2$};
 
-    \node[input neuron, right of=O-2] (Y-1) {$\hat{y}_1$};
-    \node[input neuron, right of=O-3] (Y-2) {$\hat{y}_2$};
+    \node[input neuron, right=of O-2] (Y-1) {$\hat{y}_1$};
+    \node[input neuron, right=of O-3] (Y-2) {$\hat{y}_2$};
 
     % Connect every node
     \foreach \source in {1,...,4}
@@ -139,9 +139,9 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \draw [myarrow] (psi-1) -- node[sloped] {} (z-1);
     %\normalsize
     % Annotate the layers
-    \node[annot,below of=sigma, node distance=1.2cm] (encoder) {Encoder};% $q\given{z}{x}$};
+    \node[annot,below=of sigma, node distance=1.2cm] (encoder) {Encoder};% $q\given{z}{x}$};
     %\node[annot,right of=i1] (hl) {Hidden layer};
-    \node[annot,below of=hd-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
+    \node[annot,below=of hd-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
     
     %\node[annot,below right of=O-2,node distance=0.9cm] (O-mu) {$\mu$};% $p\given{\hat{x}}{z}$};
     %\node[annot,below right of=O-4,node distance=0.9cm] (O-sigma) {$\sigma$};% $p\given{\hat{x}}{z}$};
@@ -152,11 +152,11 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \begin{scope}[on background layer]
         %\path[use as bounding box] (0,0) rectangle (10,10);
         \draw[rounded corners=3pt,fill=curry!50]
-            ($(he-1.north west)+(-0.5,0.5)$) rectangle ($(sigma.south east)+(0.5,-1.2)$);
+            ($(he-1.north west)+(-0.5,0.4)$) rectangle ($(sigma.south east)+(0.4,-1.2)$);
         \draw[rounded corners=3pt,fill=moss!50]
-            ($(hd-1.north west)+(-0.5,1.4)$) rectangle ($(O-4.south east)+(0.5,-0.5)$);
+            ($(hd-1.north west)+(-0.5,1.2)$) rectangle ($(O-4.south east)+(0.5,-0.5)$);
         \draw[rounded corners=3pt,draw=rose!100,ultra thick,dotted]
-            ($(psi-1.north west)+(-0.3,0.7)$) rectangle ($(O-4.south east)+(2.1,-0.6)$);
+            ($(psi-1.north west)+(-0.3,0.7)$) rectangle ($(O-4.south east)+(2,-0.7)$);
             
         % \draw[rounded corners=3pt,draw=black!100, thick]
         %     ($(O-1.north west)+(-0.4,0.4)$) rectangle ($(O-2.south east)+(0.4,-0.4)$);
