@@ -154,9 +154,8 @@ and is assumed to be intractable. This means that finding the exact solution to 
 \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep, myarrow/.style={-Stealth}]
     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
     \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
-    \tikzstyle{probabilistic neuron}=[circle,draw=black,ultra thick, fill=white!50,minimum size=30pt,inner sep=0pt]
     \tikzstyle{input neuron}=[neuron];
-    \tikzstyle{output neuron}=[probabilistic neuron];
+    \tikzstyle{output neuron}=[neuron];
     \tikzstyle{hidden neuron}=[neuron];
     \tikzstyle{annot}=[text centered];
 
@@ -169,7 +168,7 @@ and is assumed to be intractable. This means that finding the exact solution to 
         \node[hidden neuron, right of=I-\name] (he-\name) {$h^{(e)}_{\y}$};
         
     \foreach \name / \y in {1,...,2}
-        \node[probabilistic neuron, right of=he-\name, yshift=-0.5*\layersep] (z-\name) {$z_{\y}$};
+        \node[hidden neuron, right of=he-\name, yshift=-0.5*\layersep] (z-\name) {$z_{\y}$};
         
     \foreach \name / \y in {1,...,3}
         \node[hidden neuron, right of=he-\name, xshift=\layersep] (hd-\name)  {$h^{(d)}_{\y}$};
@@ -184,7 +183,7 @@ and is assumed to be intractable. This means that finding the exact solution to 
             
     \foreach \source in {1,...,3}
         \foreach \dest in {1,...,2}
-            \draw [myarrow] (he-\source) -- node[sloped] {} (z-\dest);
+            \draw [myarrow,dashed] (he-\source) -- node[sloped] {} (z-\dest);
             
     \foreach \source in {1,...,2}
         \foreach \dest in {1,...,3}
@@ -192,24 +191,24 @@ and is assumed to be intractable. This means that finding the exact solution to 
 
     \foreach \source in {1,...,3}
         \foreach \dest in {1,...,3}
-            \draw [myarrow] (hd-\source) -- node[sloped] {} (O-\dest);
+            \draw [myarrow,dashed] (hd-\source) -- node[sloped] {} (O-\dest);
 
     %\normalsize
     % Annotate the layers
     \node[annot,below of=he-3, node distance=1.2cm] (encoder) {Encoder};% $q\given{z}{x}$};
     %\node[annot,right of=i1] (hl) {Hidden layer};
-    \node[annot,below of=O-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
+    \node[annot,below of=hd-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
 
     \begin{scope}[on background layer]
         %\path[use as bounding box] (0,0) rectangle (10,10);
         \draw[rounded corners=3pt,fill=curry!50]
-            ($(I-1.north west)+(-0.5,0.5)$) rectangle ($(he-3.south east)+(0.5,-1.2)$);
+            ($(he-1.north west)+(-0.5,0.5)$) rectangle ($(he-3.south east)+(0.5,-1.2)$);
         \draw[rounded corners=3pt,fill=moss!50]
-            ($(hd-1.north west)+(-0.5,0.5)$) rectangle ($(O-3.south east)+(0.5,-1.2)$);
+            ($(hd-1.north west)+(-0.5,0.5)$) rectangle ($(hd-3.south east)+(0.5,-1.2)$);
     \end{scope}
 \end{tikzpicture}
 \end{subfigure}
-\caption{Left: graphical model of a VAE. The solid lines represent the generative process, and the dashed lines represent the inference process. The rectangular plate notation means we can sample M times from $\vz$ and $\vx$ while keeping $\theta$ fixed. The dashed lines denote the encoding process. Right: a variational autoencoder network with one layer in both the encoder and decoder. The thick border denotes a probabilistic neuron.}
+\caption{Left: graphical model of a VAE. The solid lines represent the generative process, and the dashed lines represent the inference process. The rectangular plate notation means we can sample M times from $\vz$ and $\vx$ while keeping $\theta$ fixed. The dashed lines denote the encoding process. Right: a variational autoencoder network with one layer in both the encoder and decoder. Dashed arrows denote samples from probabilistic neurons.}
 \label{fig_gm_vae}
 %\caption{A very simple example autoencoder network with 4 input units, 2 hidden units and 4 output units.}
 %\label{fig_autoencoder}
