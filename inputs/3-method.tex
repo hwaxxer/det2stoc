@@ -79,12 +79,12 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \node[input neuron, below of=I-2] (I-3) {$y_1$};
     \node[input neuron, below of=I-3] (I-4) {$y_2$};
         
-    \node[hidden neuron, right of=I-1, yshift=-0.5*\layersep] (he-1) {$h^{(e)}_{1}$};
-    \node[hidden neuron, below of=he-1] (he-2) {$h^{(e)}_{2}$};
-    \node[hidden neuron, below of=he-2] (he-3) {$h^{(e)}_{3}$};
+    \node[hidden neuron, right of=I-1, yshift=-0.5*\layersep] (he-1) {};
+    \node[hidden neuron, below of=he-1] (he-2) {};
+    \node[hidden neuron, below of=he-2] (he-3) {};
         
-    \node[hidden neuron, right of=he-1, yshift=-.5*\layersep] (mu) {$\mu(\phi)$};
-    \node[hidden neuron, below of=mu] (sigma) {$\sigma(\phi)$};
+    \node[hidden neuron, right of=he-1, yshift=-.5*\layersep] (mu) {$\mu$};
+    \node[hidden neuron, below of=mu] (sigma) {$\sigma$};
         
     %\foreach \name / \y in {1,...,2}
     \node[hidden neuron, right of=mu] (z-1) {$z$};
@@ -95,12 +95,12 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \node[input neuron, below of=c-1] (c-2) {$x_2$};
 
     \foreach \name in {1,...,3}
-        \node[hidden neuron, right of=he-\name, xshift=2*\layersep] (hd-\name) {$h^{(d)}_{\name}$};
+        \node[hidden neuron, right of=he-\name, xshift=2*\layersep] (hd-\name) {};
 
-    \node[hidden neuron, right of=I-1, xshift=4*\layersep] (O-1) {$\mu_1(\theta)$};
-    \node[hidden neuron, below of=O-1] (O-2) {$\mu_2(\theta)$};
-    \node[hidden neuron, below of=O-2] (O-3) {$\sigma_1(\theta)$};
-    \node[hidden neuron, below of=O-3] (O-4) {$\sigma_2(\theta)$};
+    \node[hidden neuron, right of=I-1, xshift=4*\layersep] (O-1) {$\mu_1$};
+    \node[hidden neuron, below of=O-1] (O-2) {$\mu_2$};
+    \node[hidden neuron, below of=O-2] (O-3) {$\sigma_1$};
+    \node[hidden neuron, below of=O-3] (O-4) {$\sigma_2$};
 
     \node[input neuron, right of=O-2] (Y-1) {$\hat{y}_1$};
     \node[input neuron, right of=O-3] (Y-2) {$\hat{y}_2$};
@@ -110,7 +110,7 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
         \foreach \dest in {1,...,3}
             \draw [myarrow] (I-\source) -- node[sloped] {} (he-\dest);
             
-    \foreach \source in {1,...,2}
+    \foreach \source in {1,...,3}
         \foreach \dest in {mu, sigma}
             \draw [myarrow] (he-\source) -- node[sloped] {} (\dest);
         %\draw [myarrow] (he-\source) -- node[sloped] {} (sigma);
@@ -143,11 +143,11 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     %\node[annot,right of=i1] (hl) {Hidden layer};
     \node[annot,below of=hd-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
     
-    \node[annot,below right of=O-2,node distance=0.9cm] (O-mu) {$\mu$};% $p\given{\hat{x}}{z}$};
-    \node[annot,below right of=O-4,node distance=0.9cm] (O-sigma) {$\sigma$};% $p\given{\hat{x}}{z}$};
+    %\node[annot,below right of=O-2,node distance=0.9cm] (O-mu) {$\mu$};% $p\given{\hat{x}}{z}$};
+    %\node[annot,below right of=O-4,node distance=0.9cm] (O-sigma) {$\sigma$};% $p\given{\hat{x}}{z}$};
 
-    \node[annot,below right of=mu,node distance=0.9cm] (mubox) {$\mu$};% $p\given{\hat{x}}{z}$};
-    \node[annot,below right of=sigma,node distance=0.9cm] (sigmabox) {$\sigma$};% $p\given{\hat{x}}{z}$};
+    %\node[annot,below right of=mu,node distance=0.9cm] (mubox) {$\mu$};% $p\given{\hat{x}}{z}$};
+    %\node[annot,below right of=sigma,node distance=0.9cm] (sigmabox) {$\sigma$};% $p\given{\hat{x}}{z}$};
     
     \begin{scope}[on background layer]
         %\path[use as bounding box] (0,0) rectangle (10,10);
@@ -156,20 +156,20 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
         \draw[rounded corners=3pt,fill=moss!50]
             ($(hd-1.north west)+(-0.5,1.4)$) rectangle ($(O-4.south east)+(0.5,-0.5)$);
         \draw[rounded corners=3pt,draw=rose!100,ultra thick,dotted]
-            ($(psi-1.north west)+(-0.3,0.7)$) rectangle ($(O-4.south east)+(2.1,-0.5)$);
+            ($(psi-1.north west)+(-0.3,0.7)$) rectangle ($(O-4.south east)+(2.1,-0.6)$);
             
-        \draw[rounded corners=3pt,draw=black!100, thick]
-            ($(O-1.north west)+(-0.4,0.4)$) rectangle ($(O-2.south east)+(0.4,-0.4)$);
-        \draw[rounded corners=3pt,draw=black!100, thick]
-            ($(O-3.north west)+(-0.4,0.4)$) rectangle ($(O-4.south east)+(0.4,-0.4)$);
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(O-1.north west)+(-0.4,0.4)$) rectangle ($(O-2.south east)+(0.4,-0.4)$);
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(O-3.north west)+(-0.4,0.4)$) rectangle ($(O-4.south east)+(0.4,-0.4)$);
             
-        \draw[rounded corners=3pt,draw=black!100, thick]
-            ($(mu.north west)+(-0.4,0.4)$) rectangle ($(mu.south east)+(0.4,-0.4)$);
-        \draw[rounded corners=3pt,draw=black!100, thick]
-            ($(sigma.north west)+(-0.4,0.4)$) rectangle ($(sigma.south east)+(0.4,-0.4)$);
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(mu.north west)+(-0.4,0.4)$) rectangle ($(mu.south east)+(0.4,-0.4)$);
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(sigma.north west)+(-0.4,0.4)$) rectangle ($(sigma.south east)+(0.4,-0.4)$);
     \end{scope}
 \end{tikzpicture}
-\caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D conditioning vector $\vec{y}$. Dashed arrows denote samples from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior $\vph$.}
+\caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D target vector $\vec{y}$. Dashed arrows denote sampling from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior $\vph$.}
 \label{fig:det2stoc_architecture}
 \end{figure}
 
