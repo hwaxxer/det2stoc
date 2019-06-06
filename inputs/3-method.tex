@@ -63,14 +63,14 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
 
 \begin{figure}
 \centering
-\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\nodesep and \layersep, myarrow/.style={-Stealth}]
-    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
+\begin{tikzpicture}[shorten >=0pt,-,draw=black!50, node distance=\nodesep and \layersep, myarrow/.style={-Stealth}]
+    \tikzstyle{every pin edge}=[<-,shorten <=0pt]
     \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
-    \tikzstyle{probabilistic neuron}=[circle,draw=black,ultra thick, fill=white!50,minimum size=30pt,inner sep=0pt]
+    \tikzstyle{probabilistic neuron}=[neuron,minimum size=\smallnodesize,node distance=\smallnodesep and \layersep]
     \tikzstyle{input neuron}=[neuron];
     \tikzstyle{output neuron}=[probabilistic neuron];
     \tikzstyle{hidden neuron}=[neuron];
-    \tikzstyle{annot}=[text centered];
+    \tikzstyle{annot}=[text centered, node distance=0.8cm];
     \tikzstyle{myarrow dasharrow}=[myarrow dashed];
     \scriptsize
     % Draw the nodes
@@ -83,11 +83,11 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \node[hidden neuron, below=of he-1] (he-2) {$h^{(e)}_2$};
     \node[hidden neuron, below=of he-2] (he-3) {$h^{(e)}_3$};
         
-    \node[hidden neuron, right=of he-1, yshift=-0.5*(\nodesize+\nodesep)] (mu) {$\mu$};
-    \node[hidden neuron, below=of mu] (sigma) {$\sigma$};
+    \node[probabilistic neuron, right=of he-2, yshift=0.5*(\smallnodesize+\smallnodesep)] (mu) {$\mu$};
+    \node[probabilistic neuron, below=of mu] (sigma) {$\sigma$};
         
     %\foreach \name / \y in {1,...,2}
-    \node[hidden neuron, right=of mu] (z-1) {$z$};
+    \node[hidden neuron, right=of mu, yshift=0.5*(\smallnodesize-\smallnodesep)] (z-1) {$z$};
     
     \node[hidden neuron, above=of z-1] (psi-1) {$\psi$};
 
@@ -95,15 +95,15 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \node[input neuron, below=of c-1] (c-2) {$x_2$};
 
     \foreach \name in {1,...,3}
-        \node[hidden neuron, right=of he-\name, xshift=2*\layersep + 2*\nodesize] (hd-\name) {$h^{(d)}_\name$};
+        \node[hidden neuron, right=of he-\name, xshift=2*\layersep + \nodesize+\smallnodesize] (hd-\name) {$h^{(d)}_\name$};
 
-    \node[hidden neuron, right=of I-1, xshift=4*\layersep + 4*\nodesize] (O-1) {$\mu_1$};
-    \node[hidden neuron, below=of O-1] (O-2) {$\mu_2$};
-    \node[hidden neuron, below=of O-2] (O-3) {$\sigma_1$};
-    \node[hidden neuron, below=of O-3] (O-4) {$\sigma_2$};
+    \node[probabilistic neuron, right=of hd-2, yshift=1.5*(\smallnodesize+\smallnodesep] (O-1) {$\mu_1$};
+    \node[probabilistic neuron, below=of O-1] (O-2) {$\mu_2$};
+    \node[probabilistic neuron, below=of O-2] (O-3) {$\sigma_1$};
+    \node[probabilistic neuron, below=of O-3] (O-4) {$\sigma_2$};
 
-    \node[input neuron, right=of O-2] (Y-1) {$\hat{y}_1$};
-    \node[input neuron, right=of O-3] (Y-2) {$\hat{y}_2$};
+    \node[input neuron, right=of hd-1, xshift=\layersep+\smallnodesize, yshift=-0.5*(\nodesize+\nodesep)] (Y-1) {$\hat{y}_1$};
+    \node[input neuron, below=of Y-1] (Y-2) {$\hat{y}_2$};
 
     % Connect every node
     \foreach \source in {1,...,4}
@@ -113,8 +113,7 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     \foreach \source in {1,...,3}
         \foreach \dest in {mu, sigma}
             \draw [myarrow] (he-\source) -- node[sloped] {} (\dest);
-        %\draw [myarrow] (he-\source) -- node[sloped] {} (sigma);
-        
+
     \foreach \source in {mu, sigma}
             \draw [myarrow,dashed] (\source) -- node[sloped] {} (z-1);
 
@@ -137,26 +136,19 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
         \draw [myarrow,dashed] (O-\source) -- node[sloped] {} (Y-2); 
             
     \draw [myarrow] (psi-1) -- node[sloped] {} (z-1);
-    %\normalsize
-    % Annotate the layers
-    \node[annot,below=of sigma, node distance=1.2cm] (encoder) {Encoder};% $q\given{z}{x}$};
-    %\node[annot,right of=i1] (hl) {Hidden layer};
-    \node[annot,below=of hd-3,node distance=1.2cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
-    
-    %\node[annot,below right of=O-2,node distance=0.9cm] (O-mu) {$\mu$};% $p\given{\hat{x}}{z}$};
-    %\node[annot,below right of=O-4,node distance=0.9cm] (O-sigma) {$\sigma$};% $p\given{\hat{x}}{z}$};
 
-    %\node[annot,below right of=mu,node distance=0.9cm] (mubox) {$\mu$};% $p\given{\hat{x}}{z}$};
-    %\node[annot,below right of=sigma,node distance=0.9cm] (sigmabox) {$\sigma$};% $p\given{\hat{x}}{z}$};
+    % Annotate the layers
+    \node[annot, below right=of he-3, yshift=0.6cm] (encoder) {Encoder};% $q\given{z}{x}$};
+    \node[annot, below right=of hd-3, yshift=0.6cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
     
     \begin{scope}[on background layer]
         %\path[use as bounding box] (0,0) rectangle (10,10);
         \draw[rounded corners=3pt,fill=curry!50]
-            ($(he-1.north west)+(-0.5,0.4)$) rectangle ($(sigma.south east)+(0.4,-1.2)$);
+            ($(he-1.north west)+(-0.5,0.4)$) rectangle ($(sigma.south east)+(0.4,-1.6)$);
         \draw[rounded corners=3pt,fill=moss!50]
-            ($(hd-1.north west)+(-0.5,1.2)$) rectangle ($(O-4.south east)+(0.5,-0.5)$);
+            ($(hd-1.north west)+(-0.5,0.4)$) rectangle ($(O-4.south east)+(0.4,-0.7)$);
         \draw[rounded corners=3pt,draw=rose!100,ultra thick,dotted]
-            ($(psi-1.north west)+(-0.3,0.7)$) rectangle ($(O-4.south east)+(2,-0.7)$);
+            ($(psi-1.north west)+(-0.3,0.4)$) rectangle ($(O-4.south east)+(2,-1.4)$);
             
         % \draw[rounded corners=3pt,draw=black!100, thick]
         %     ($(O-1.north west)+(-0.4,0.4)$) rectangle ($(O-2.south east)+(0.4,-0.4)$);
@@ -172,166 +164,6 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
 \caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D target vector $\vec{y}$. Dashed arrows denote sampling from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior $\vph$.}
 \label{fig:det2stoc_architecture}
 \end{figure}
-
-% \begin{figure}
-% \todo[inline]{This figure does not make much sense and is not pretty.}
-
-% \begin{subfigure}[t]{0.5\textwidth}
-% \centering
-% \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep and \layersep, myarrow/.style={-Stealth}]
-%     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
-%     \tikzstyle{neuron}=[rectangle,draw=black,fill=white!50,minimum height=30pt, minimum width=30pt, inner sep=10pt]
-%     %\tikzstyle{probabilistic neuron}=[draw=black,ultra thick,fill=white!50,minimum size=30pt,inner sep=0pt]
-%     \tikzstyle{input neuron}=[neuron];
-%     \tikzstyle{output neuron}=[neuron];
-%     \tikzstyle{hidden neuron}=[neuron];%, minimum height=30pt, minimum width=90pt];
-%     \tikzstyle{annot}=[text centered];
-
-%     \scriptsize
-%     % Draw the nodes
-%     \node[input neuron] (I-1) at (0,0) {$\vns$};
-%     \node[input neuron, right of=I-1] (I-2) {$\vs$};
-%     \node[input neuron, right of=I-2] (I-3) {$\va$};
-
-%     \node[input neuron, above of=I-1] (e) {$q_{\vth}\given{\vz}{\vns, \vs, \va}$};
-        
-%     \node[input neuron, above of=e] (phi-1) {$\vph_{\mu,\sigma}(\vns, \vs, \va)$};
-
-%     %\node[input neuron, right of=e, anchor=west] (CI-1) {$\vs$};
-%     %\node[input neuron, right of=CI-1] (CI-2) {$\va$};
-    
-%     \node[hidden neuron, above of=e, yshift=\layersep] (z) {$z \sim \mathcal{N}(\vph_{\mu}, \vph_{\sigma})$};
-%     \node[hidden neuron, right of=phi-1, anchor=west] (d) {$p_{\vph}\given{\vns}{\vz, \vs, \va}$};
-        
-%     \node[output neuron, above of=d] (ns) {$\hat{\pmb{s}}_{t+1}$};
-
-%     % Connect every node
-%     \foreach \source in {1,...,3}
-%         \draw [myarrow] (I-\source) -- node[sloped] {} (e);
-        
-%     % \foreach \source in {1,...,2}
-%         % \draw [myarrow] (CI-\source) -- node[sloped] {} (d);
-        
-%     \foreach \dest in {1,...,1}
-%         \draw [myarrow] (e) -- node[sloped] {} (phi-\dest);
-    
-%     \foreach \source in {1,...,1}
-%         \draw [myarrow] (phi-\source) -- node[sloped] {} (z);
-%     \draw [myarrow] (z) -- node[sloped] {} (d);
-    
-%     \foreach \source in {2,...,3}
-%         \draw [myarrow] (I-\source) -- node[sloped] {} (d);
-
-%     \draw [myarrow] (d) -- node[sloped] {} (ns);
-%     %\draw[decorate,decoration={brace,mirror,amplitude=10pt},-,thick,black]
-%     %    ($(I-1)+(-1,0)$) -- ($(I-3)+(-1,0)$) node [black,midway,xshift=-1.0cm] {$s_t$};
-        
-%     %\draw[decorate,decoration={brace,amplitude=10pt},-,thick,black]
-%     %    ($(O-1)+(1,0)$) -- ($(O-3)+(1,0)$) node [black,midway,xshift=1.0cm] {$s_{t+1}$};
-    
-% \end{tikzpicture}
-% \end{subfigure}
-% \quad
-% \begin{subfigure}[t]{0.5\textwidth}
-
-% \centering
-% \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep and \layersep, myarrow/.style={-Stealth}]
-%     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
-%     \tikzstyle{neuron}=[rectangle,draw=black,fill=white!50,minimum size=30pt,inner sep=10pt]
-%     \tikzstyle{probabilistic neuron}=[draw=black,ultra thick,fill=white!50,minimum size=30pt,inner sep=0pt]
-%     \tikzstyle{input neuron}=[neuron];
-%     \tikzstyle{output neuron}=[neuron];
-%     \tikzstyle{hidden neuron}=[neuron, minimum height=30pt, minimum width=90pt];
-%     \tikzstyle{annot}=[text centered];
-
-%     \scriptsize
-%     % Draw the nodes
-%     \node[input neuron] (I-1) at (0,0) {$\vs$};
-%     \node[input neuron, right of=I-1, anchor=east] (I-2) {$\va$};
-%     \node[input neuron, right of=I-2] (I-3) {$\vz \sim \mathcal{N}(0, I)$};
-        
-%     %\node[neuron, above of=I-1, yshift=\layersep] (phi) {$\vph_{\mu, \sigma}$};
-    
-%     %\node[input neuron, right of=e, anchor=west] (CI-1) {$\vs$};
-%     %\node[input neuron, right of=CI-1] (CI-2) {$\va$};
-    
-%     %\node[hidden neuron, above of=phi] (z) {$z \sim p_{\vph}\given{\vz}{\vns, \vs, \va}$};
-%     \node[hidden neuron, above of=I-1, xshift=\layersep] (d) {$p_{\vph}\given{\vns}{\vz, \vs, \va}$};
-        
-%     \node[output neuron, above of=d] (ns) {$\hat{\vec{s}}_{t+1}$};
-
-%     % Connect every node
-    
-%     %\draw [myarrow] (z) -- node[sloped] {} (d);
-    
-%     \foreach \source in {1,...,3}
-%         \draw [myarrow] (I-\source) -- node[sloped] {} (d);
-
-%     \draw [myarrow] (d) -- node[sloped] {} (ns);
-%     %\draw[decorate,decoration={brace,mirror,amplitude=10pt},-,thick,black]
-%     %    ($(I-1)+(-1,0)$) -- ($(I-3)+(-1,0)$) node [black,midway,xshift=-1.0cm] {$s_t$};
-        
-%     %\draw[decorate,decoration={brace,amplitude=10pt},-,thick,black]
-%     %    ($(O-1)+(1,0)$) -- ($(O-3)+(1,0)$) node [black,midway,xshift=1.0cm] {$s_{t+1}$};
-        
-% \end{tikzpicture}
-% \end{subfigure}
-
-
-% \caption{(Left) A training-time \cvae{} network used for \dettostoc{}. The next state $\vns$ is only used as input to the encoder. The current state $\vs$ and action $\va$ are used as inputs to both encoder and decoder. (Right) A testing-time \cvae{} network. The current state $\vs$ and action $\va$ are used as inputs the decoder and we sample from a standard normal.}
-% \label{fig_gm_vae}
-% \end{figure}
-
-% \begin{figure}
-% \centering
-% \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep and \layersep, myarrow/.style={-Stealth}]
-%     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
-%     \tikzstyle{neuron}=[rectangle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
-%     \tikzstyle{probabilistic neuron}=[draw=black,ultra thick,fill=white!50,minimum size=30pt,inner sep=0pt]
-%     \tikzstyle{input neuron}=[neuron];
-%     \tikzstyle{output neuron}=[neuron];
-%     \tikzstyle{hidden neuron}=[neuron, minimum width=30pt, minimum height=90pt];
-%     \tikzstyle{annot}=[text centered];
-
-%     \scriptsize
-%     % Draw the nodes
-%     \node[input neuron] (I-1) at (0,0) {$\vns$};
-%     \node[input neuron, below of=I-1] (I-2) {$\vs$};
-%     \node[input neuron, below of=I-2] (I-3) {$\va$};
-
-%     \node[hidden neuron, right of=I-2] (e) {$q$};
-        
-%     \node[neuron, right of=I-1, xshift=\layersep] (phi) {$\vph_{\mu, \sigma}$};
-    
-%     \node[input neuron, below of=phi] (CI-1) {$\vs$};
-%     \node[input neuron, below of=CI-1] (CI-2) {$\va$};
-    
-%     \node[hidden neuron, right of=CI-1] (d) {$p$};
-        
-%     \node[output neuron, right of=d] (ns)  {$\vns$};
-
-%     % Connect every node
-%     \foreach \source in {1,...,3}
-%         \draw [myarrow] (I-\source) -- node[sloped] {} (e);
-        
-%     \draw [myarrow] (e) -- node[sloped] {} (phi);
-    
-%     \draw [myarrow] (phi) -- node[sloped] {} (d);
-    
-%     \foreach \source in {1,...,2}
-%         \draw [myarrow] (CI-\source) -- node[sloped] {} (d);
-
-%     \draw [myarrow] (d) -- node[sloped] {} (ns);
-%     %\draw[decorate,decoration={brace,mirror,amplitude=10pt},-,thick,black]
-%     %    ($(I-1)+(-1,0)$) -- ($(I-3)+(-1,0)$) node [black,midway,xshift=-1.0cm] {$s_t$};
-        
-%     %\draw[decorate,decoration={brace,amplitude=10pt},-,thick,black]
-%     %    ($(O-1)+(1,0)$) -- ($(O-3)+(1,0)$) node [black,midway,xshift=1.0cm] {$s_{t+1}$};
-        
-% \end{tikzpicture}
-% \caption{A \cvae{} network. The thick border denotes a probabilistic neuron. The current state is fed to the decoder network along with the codings.}
-% \label{fig_gm_vae}
-% \end{figure}
 
 \section{Conditioning architecture and transfer-aware training}
 
@@ -352,101 +184,16 @@ Since the KL divergence term in the objective function penalizes priors that div
     z = \frac{x - \mu}{\sigma}
 \end{equation*}
 
-
 Rather than trying to output the next state, the target $\vy$ is the delta between next and current state
 
 \begin{equation*}
     \vy_{\Delta} = \vns - \vs
 \end{equation*}
 
-
-% \begin{figure}
-% \centering
-% \begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep and \layersep, myarrow/.style={-Stealth}]
-%     \tikzstyle{every pin edge}=[<-,shorten <=1pt]
-%     \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
-%     \tikzstyle{probabilistic neuron}=[circle,draw=black,ultra thick,fill=white!50,minimum size=30pt,inner sep=0pt]
-%     \tikzstyle{input neuron}=[neuron];
-%     \tikzstyle{output neuron}=[probabilistic neuron];
-%     \tikzstyle{hidden neuron}=[neuron];
-%     \tikzstyle{annot}=[text centered];
-
-%     \scriptsize
-%     % Draw the nodes
-%     \foreach \name / \y in {1,...,2}
-%         \node[input neuron] (I-\name) at (0,-0.5*\layersep-\y*\layersep) {$s_{t_{\name}}$};
-
-%     \foreach \name / \y in {1,...,3}
-%         \node[hidden neuron] at (\layersep,-\y*\layersep) (he-\name) {};
-        
-%     \node[neuron, right of=he-1] (p-1) {$\phi_{\mu}$};
-%     \node[neuron, right of=he-2] (p-2) {$\phi_{ \Sigma}$};
-%     \node[neuron, right of=he-3] (p-3) {$\epsilon$};
-        
-%     \foreach \name in {1,...,3}
-%         \node[hidden neuron, right of=p-\name] (z-\name) {$z_{\name}$};
-        
-%     \foreach \name / \y in {1,...,3}
-%         \node[hidden neuron, right of=z-\name] (hd-\name) {};
-
-%     \foreach \name / \y in {1,...,2}
-%         \node[output neuron, right of=hd-\name, yshift=-0.5*\layersep] (O-\name)  {$s_{{(t+1)}_{\name}}$};
-
-%     % Connect every node
-%     \foreach \source in {1,...,2}
-%         \foreach \dest in {1,...,3}
-%             \draw [myarrow] (I-\source) -- node[sloped] {} (he-\dest);
-            
-%     \foreach \source in {1,...,3}
-%         \foreach \dest in {1,...,2}
-%             \draw [myarrow] (he-\source) -- node[sloped] {} (p-\dest);
-            
-%     \foreach \source in {1,...,3}
-%         \foreach \dest in {1,...,3}
-%             \draw [myarrow] (p-\source) -- node[sloped] {} (z-\dest);
-            
-%     \foreach \source in {1,...,1}
-%         \foreach \dest in {1,...,3}
-%             \draw [myarrow] (z-\source) -- node[sloped] {} (hd-\dest);
-            
-%     \foreach \source in {1,...,2}
-%         \foreach \dest in {1,...,3}
-%             \draw [myarrow] (z-\source) -- node[sloped] {} (hd-\dest);
-
-%     \foreach \source in {1,...,3}
-%         \foreach \dest in {1,...,2}
-%             \draw [myarrow] (hd-\source) -- node[sloped] {} (O-\dest);
-
-%     %\draw[decorate,decoration={brace,mirror,amplitude=10pt},-,thick,black]
-%     %    ($(I-1)+(-1,0)$) -- ($(I-3)+(-1,0)$) node [black,midway,xshift=-1.0cm] {$s_t$};
-        
-%     %\draw[decorate,decoration={brace,amplitude=10pt},-,thick,black]
-%     %    ($(O-1)+(1,0)$) -- ($(O-3)+(1,0)$) node [black,midway,xshift=1.0cm] {$s_{t+1}$};
-        
-% \end{tikzpicture}
-% \caption{A general representation of the network used for \dettostoc{}.}
-% \label{fig_dettostoc}
-% \end{figure}
-
-
 \subsection{Tools}
 
 The implementation was done in Python 3.5.2. Neural networks were built using TensorFlow \parencite{tensorflow2015-whitepaper}. 
 All experiments were conducted on a machine with a Intel Core i7-8700 CPU, NVIDIA GeForce 1080Ti and 16GB of RAM.
-
-
-% \subsection{Parameter space}
-
-% An important aspect of the method when using multiple parameters is to realize that the number of required samples increases exponentially with the number of parameters. It is crucial that the whole parameter space is covered for \dettostoc{} to be able to generalize to unseen data. Figure \ref{fig_parameter_space_3d} shows the parameter space in 3d for the Windy Slope scenario with friction, center of mass and wind.
-
-% \begin{figure}
-% \begin{center}
-% \includegraphics[width=0.8\textwidth]{img/parameter_space_3d}
-% \caption{A well covered parameter space in 3d.}
-% \label{fig_parameter_space_3d}
-% \end{center}
-% \todo[inline]{Not sure if this makes sense or is needed..}
-% \end{figure}
 
 \chapter{Experimental results}
 \label{experiments}
