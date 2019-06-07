@@ -9,6 +9,8 @@ The \dettostoc{} algorithm was tested on two MuJoCo scenarios. The two scenarios
 
 We showed that the \dettostoc{} algorithm can be used as a data-efficient way to represent probability dynamics of robots and their environments.
 
+The code for \dettostoc{}, as well as both MuJoCo environments can be found at \url{https://github.com/hwaxxer/det2stoc}. 
+
 \section{Discussion}
 
 From the results, it is clear that \dettostoc{} can be used to improve performance of a stochastic simulator. 
@@ -29,3 +31,4 @@ Some work was done trying out a mixture of distributions as prior \parencite{DBL
 We used a \cvae{} as a generative model. However, \dettostoc{} could be used with other generative models, such as Generative Adversarial Networks (GANs) \parencite{goodfellow2014} with some modifications.
 
 We would like to extend our framework to real data and real robots in future work. Furthermore, we would incorporate higher-dimensional sensor modalities such as vision for both state observations and parameters of simulation randomization.
+Another interesting direction would be to employ a higher latent space dimension than the dimension of parameters. This would allow for capturing latent information that is not directly tied to the parameters we chose to learn and could yield even better performance.
