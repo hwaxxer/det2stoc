@@ -2,24 +2,24 @@
 
 \begin{figure}
 \centering
-\text{Latent space encodings for the Windy Slope scenario.}
+\text{Latent space encodings for the \textsc{Windy Slope Scenario}.}
 \captionsetup{size=footnotesize}
 \begin{subfigure}{\linewidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/iter0}
+  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/latent_encoding_iter0}
   \caption{Initial estimates of $\psi$}
   \label{fig_3_parameters_0}
 \end{subfigure}
 \begin{subfigure}{\linewidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/latent_encoding_iter1}
+  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/latent_encoding_iter1}
   \caption{1st iteration of \dettostoc{}}
   \label{fig_3_parameters_0}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/latent_encoding_iter2}
+  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/latent_encoding_iter2}
   \caption{2nd iteration of \dettostoc{}}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/latent_encoding_iter3}
+  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/latent_encoding_iter3}
   \caption{3rd iteration of \dettostoc{}}
 \end{subfigure}
 \caption{Plots show the learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\vec{\xi}^{real}$ as normalized histograms after subsequent steps of \dettostoc{}.
@@ -30,7 +30,7 @@ The \emph{real} distribution of the parameters $\theta_{\mu, \sigma}$ in drawn w
 
 \begin{figure}
 \centering
-\text{Latent space encodings for the YuMi scenario.}
+\text{Latent space encodings for the YuMi Box Pushing Scenario.}
 \captionsetup{size=footnotesize}
 \begin{subfigure}{0.45\textwidth}
   \includegraphics[width=\textwidth]{img/yumi/latent-representation/yumi_latent_encoding_0_iter}%
@@ -58,26 +58,20 @@ The parameters correspond (from left-to-right) to tangential friction $\pfrictio
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{img/windyslope/output/windyslope_output_det2stoc2_dist_10_step1_iter4.png}
+    \includegraphics[width=.8\textwidth,trim=0 0 0 70,clip]{img/windyslope/output/output_distribution_step1_delta_all}
     \caption{Output predictions $\ptheta \protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=1$ for iteration 4 of \dettostoc{}.}
-    \label{fig:output_distribution_step1_posvel_dettostoc}
+    \label{fig:output_distribution_step1_dettostoc}
 \end{figure}%
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{img/windyslope/output/windyslope_output_det2stoc2_dist_10_step50_iter4.png}
+    \includegraphics[width=0.8\textwidth,trim=0 0 0 70,clip]{img/windyslope/output/output_distribution_step50_delta_all}
     \caption{Output predictions $\ptheta \protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=50$ for iteration 4 of \dettostoc{}.}
-    \label{fig:output_distribution_step50_posvel_dettostoc}
+    \label{fig:output_distribution_step50_dettostoc}
 \end{figure}
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{img/windyslope/output/windyslope_output_det2stoc2_dist_10_step100_iter4.png}
+    \includegraphics[width=0.8\textwidth,trim=0 0 0 70,clip]{img/windyslope/output/output_distribution_step100_delta_all}
     \caption{Output predictions $\ptheta \protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=100$ for iteration 4 of \dettostoc{}.}
-    \label{fig:output_distribution_step100_posvel_dettostoc}
-\end{figure}
-\begin{figure}
-    \centering
-    \includegraphics[width=0.8\textwidth]{img/windyslope/output/windyslope_output_baseline_step50.png}
-    \caption{Output predictions $\ptheta \protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=50$ for CVAE (baseline).}
-    \label{fig:output_distribution_step50_posvel_baseline}
+    \label{fig:output_distribution_step100_dettostoc}
 \end{figure}
 

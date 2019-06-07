@@ -11,7 +11,10 @@ We showed that the \dettostoc{} algorithm can be used as a data-efficient way to
 
 \section{Discussion}
 
-From the results, it is clear that \dettostoc{} can locate the mean but slightly underestimates the variance of parameters. This is a general problem of variational inference \parencite{bishop:2006:PRML} and not specific to the proposed methods.
+From the results, it is clear that \dettostoc{} can be used to improve performance of a stochastic simulator. 
+
+One problem when learning the dynamics of a scenario with control actions, such as an RL environment, is that some states will not be explored in reasonable time with purely random actions. In the YuMi Box Pushing scenario, we trained an RL policy using dynamics randomization and collected data during rollouts of the trained policy. The policy can then be transferred to the real-world whereupon we collect real data and train using \dettostoc{}. This process can be repeated many times.
+% can locate the mean but slightly underestimates the variance of parameters. This is a general problem of variational inference \parencite{bishop:2006:PRML} and not specific to the proposed methods.
 
 \subsection{Constrained optimization}
 
@@ -19,12 +22,10 @@ The \dettostoc{} algorithm that has been outlined in this thesis does not enforc
 
 \subsection{Future work}
 
-For the experiments, we assume that the \textit{real} parameters lie in the interval of a prior guess. Future research should look into whether \dettostoc{} can indicate that the prior is outside the interval, and how well it handles more uninformed priors for the parameters.
+For the experiments, we assume that the \textit{real} parameters fall within the interval of a prior estimation. Future research should look into whether \dettostoc{} can indicate that the prior is outside the interval, and how well it handles more uninformed priors for the parameters.
 
-Some work was done trying out a mixture of distributions as prior \parencite{DBLP:journals/corr/DilokthanakulMG16} but we found this approach ineffective in our experiments. \todo{Is Kingma's M2 model use a mixture as prior?}
+Some work was done trying out a mixture of distributions as prior \parencite{DBLP:journals/corr/DilokthanakulMG16} but we found this approach ineffective in our experiments.
 
 We used a \cvae{} as a generative model. However, \dettostoc{} could be used with other generative models, such as Generative Adversarial Networks (GANs) \parencite{goodfellow2014} with some modifications.
 
-We would like to extend our framework to real data and real robots in future work. Furthermore, we would incorporate higher-dimensional sensor modalities, such as vision, for both state observations and parameters of simulation randomization.
-
-\todo{Importance weighted sampling from posterior}
+We would like to extend our framework to real data and real robots in future work. Furthermore, we would incorporate higher-dimensional sensor modalities such as vision for both state observations and parameters of simulation randomization.

@@ -22,32 +22,34 @@ Each hidden layer typically computes some affine transformation followed by a no
 %For some task, we want to predict the output $\boldsymbol{y}$ given some input $\vx$ and parameters $\boldsymbol{\theta}$. 
 
 \begin{figure}
-\captionsetup{width=.8\linewidth}
+\captionsetup{width=\linewidth}
 \centering
-\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep*1.5, myarrow/.style={-Stealth}]
+\begin{tikzpicture}[shorten >=0pt,->,draw=black!50,
+    node distance=\nodesep and \layersep,
+    myarrow/.style={-Stealth},
+    brc/.style = {decorate, decoration={brace,amplitude=2mm},-,thick,black},inner sep=0pt]
     \scriptsize
-    \tikzstyle{every pin edge}=[<-,shorten <=1pt]
-    \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
+    \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=\nodesize,inner sep=0pt]
     \tikzstyle{input neuron}=[neuron];
     \tikzstyle{output neuron}=[neuron];
     \tikzstyle{hidden neuron}=[neuron];
-    \tikzstyle{annot} = [text width=4em, text centered]
+    \tikzstyle{annot}=[text width=3em, text centered]
 
     % Draw the input layer nodes
-    \foreach \name / \y in {1,...,3}
-    % This is the same as writing \foreach \name / \y in {1/1,2/2,3/3,4/4}
-        \node[input neuron] (I-\name) at (0,-\y*1.5 cm) {$x_{\name}$};
+    \node[input neuron] (I-1) at (0,0) {$x_1$};
+    \foreach \name [count=\i] in {2,...,3}
+        \node[input neuron, below=of I-\i] (I-\name) {$x_{\name}$};
 
     % Draw the hidden layer nodes
-    \foreach \name / \y in {1,...,3}
-        \node[hidden neuron, right of=I-\name] (H1-\name) {$h^{(1)}_{\name}$};
+    \foreach \name in {1,...,3}
+        \node[hidden neuron, right=of I-\name] (H1-\name) {$h^{(1)}_{\name}$};
         
     % Draw the hidden layer nodes
-    \foreach \name / \y in {1,...,3}
-        \node[hidden neuron, right of=H1-\name] (H2-\name) {$h^{(2)}_{\name}$};
+    \foreach \name in {1,...,3}
+        \node[hidden neuron, right=of H1-\name] (H2-\name) {$h^{(2)}_{\name}$};
 
     % Draw the output layer node
-    \node[output neuron, right of=H2-2] (O) {$y$};
+    \node[output neuron, right=of H2-2] (O) {$y$};
 
     % Connect every node in the input layer with every node in the
     % hidden layer.
@@ -70,14 +72,14 @@ Each hidden layer typically computes some affine transformation followed by a no
     % \node[annot,right of=hl] {Output layer};
     
     \normalsize
-    \draw[decorate,decoration={brace,amplitude=6pt},-,thick,black]
+    \draw[brc,inner sep=0pt]
         ($(I-1.north west)+(-0.3,0.3)$) -- ($(I-1.north east)+(0.3,0.3)$) node [black,midway,yshift=1.0cm] {Input layer};
 
-    \draw[decorate,decoration={brace,amplitude=6pt},-,thick,black]
+    \draw[brc,inner sep=0pt]
         ($(H1-1.north west)+(-0.3,0.3)$) -- ($(H2-1.north east)+(0.3,0.3)$) node [black,midway,yshift=1.0cm] {Hidden layers};
         
-    \draw[decorate,decoration={brace,amplitude=6pt},-,thick,black]
-        ($(O.north west)+(-0.3,\layersep+0.3)$) -- ($(O.north east)+(0.3,\layersep+0.3)$) node [black,midway,yshift=1.0cm] {Output layer};
+    \draw[brc,inner sep=0pt]
+        ([yshift=\nodesize+\nodesep]$(O.north west)+(-0.3,0.3)$) -- ([yshift=\nodesize+\nodesep]$(O.north east)+(0.3,0.3)$) node [black,midway,yshift=1.0cm] {Output layer};
 \end{tikzpicture}
 \caption{An example feedforward network with three inputs, one hidden layer with three units, and one output unit.}
 \label{fig:mlp}
@@ -211,14 +213,14 @@ and is assumed to be intractable. This means that finding the exact solution to 
     \foreach \source [count=\i] in {4,...,6}
         \draw [myarrow,dashed] (do-\source) -- node[sloped] {} (O-\i);
 
-    \node[annot,below right=of he-2] (encoder) {Encoder};% $q\given{z}{x}$};
-    \node[annot,below=of hd-2, yshift=-0.75cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
+    \node[annot,right=of he-2, yshift=-1cm] (encoder) {Encoder};% $q\given{z}{x}$};
+    \node[annot,below=of hd-2, yshift=-1cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
 
     \begin{scope}[on background layer]
         \draw[rounded corners=3pt,fill=curry!50]
-            ($(he-1.north west)+(-0.4,0.5)$) rectangle ($(eo-2.south east)+(0.3,-1.2)$);
-        \draw[rounded corners=3pt,fill=moss!50]
-            ($(do-1.north west)+(-2,0.5)$) rectangle ($(do-6.south east)+(0.3,-0.5)$);
+            ($(he-1.north west)+(-0.4,0.5)$) rectangle ($(eo-2.south east)+(0.4,-1.2)$);
+        \draw[rounded corners=3pt,fill=moss!50,label=left:ok]
+            ($(do-1.north west)+(-2,0.4)$) rectangle ($(do-6.south east)+(0.3,-0.4)$);
     \end{scope}
 \end{tikzpicture}
 \caption{A variational autoencoder network with two layers in both the encoder and decoder and one latent variable $z$. Dashed arrows denote samples from probabilistic neurons, in this example both posterior and likelihood are Gaussian.}

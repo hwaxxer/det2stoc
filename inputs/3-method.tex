@@ -26,7 +26,7 @@ Domain and dynamics randomization are powerful techniques to reduce the reality 
 \section{Proposed \dettostoc{} algorithm}
 \label{det2stoc:algorithm}
 
-Our approach specifies how existing general-purpose simulators could be used to make the learning of the stochastic function $g(\cdot)$ more data efficient. We denote real observations $\trajreal$ and simulated observations $\trajsim$. Algorithm \ref{alg:det2stoc} describes \dettostoc{} procedure.
+Our approach specifies how existing general-purpose simulators could be used to make the learning of the stochastic function $g(\cdot)$ more data efficient. We denote real observations $\trajreal$ and simulated observations parameterized by $\vpsi$ $\trajsim_{\vpsi}$. Algorithm \ref{alg:det2stoc} describes \dettostoc{} procedure.
 
 \vspace{\baselineskip}% Insert a blank line
 \begin{algorithm}[H]
@@ -50,11 +50,8 @@ Our approach specifies how existing general-purpose simulators could be used to 
 \vspace{\baselineskip}% Insert a blank line
 First, we collect trajectories $\trajreal$ from our real environment.
 Then, we choose a set of initial parameters that cannot be measured or that have uncertainty associated with them. We decide on an initial distribution $\vpsi_0$ for these parameters, typically an uninformative distribution, for example a uniform distribution or a wide truncated Gaussian distribution.
-
 In the beginning of each iteration $i$, we run simulations parameterized by samples from $\vpsi_i$ and collect trajectories $\trajsim_{\vpsi_i}=\{\vs, \va, \vns\}^{1:N}$. The decoder network $\fdecoder{}$ is pre-trained separately on the simulated data $\trajsim_{\vec{\psi_i}}{}$ to match $\fsimulator(\vpsi_i)$ using a negative log likelihood loss function. However, during this pre-training phase, instead of sampling $\vz$ from the posterior $\qphi$, the network is fed parameters $\vpsi$ used during simulation for that particular timestep $\fdecoder = f(\vpsi; \vth)$. The intention of this step is to train the decoder to capture how the simulation parameters $\vpsi$ affect the system dynamics.% which will infer parameters $\vpsi_{\mu,\sigma}$ that closely ressemble those of real-world dynamics.
-
 The \cvae{} is subsequently trained to match $\fpsisimulator{}$, but the decoder weights are kept frozen. The purpose of this step is to train the encoder to produce a posterior that maximizes the log likelihood of the next state $\vns$, while ensuring that the decoder does not catastrophically forget \parencite{French2006CatastrophicFI} what it learned during pretraining. The input to the encoder is state $\vs$, action $\va$ and next state $\vns$. %Including the next state ensures that there is enough information for the network to infer what parameter corresponds to which output.
-
 Finally, we update our parameters $\vpsi_{i+1}$ with the posterior $\vph_{\mu, \sigma}$.
 
 This process can be repeated multiple times. The result of the \dettostoc{} algorithm is the trained decoder as well as the learned $\vph_{\mu, \sigma}$. Because of how the training procedure was set up, the network is now aligned with real world data.
@@ -160,8 +157,10 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
         % \draw[rounded corners=3pt,draw=black!100, thick]
         %     ($(sigma.north west)+(-0.4,0.4)$) rectangle ($(sigma.south east)+(0.4,-0.4)$);
     \end{scope}
+    
+    %\node[annot, above=of decoderbox] {okokok};
 \end{tikzpicture}
-\caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D target vector $\vec{y}$. Dashed arrows denote sampling from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior $\vph$.}
+\caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D target vector $\vec{y}$. Dashed arrows denote sampling from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior.}
 \label{fig:det2stoc_architecture}
 \end{figure}
 
@@ -184,7 +183,7 @@ Since the KL divergence term in the objective function penalizes priors that div
     z = \frac{x - \mu}{\sigma}
 \end{equation*}
 
-Rather than trying to output the next state, the target $\vy$ is the delta between next and current state
+Rather than trying to output the next state, the target $\vy$ is the delta between next and current state:
 
 \begin{equation*}
     \vy_{\Delta} = \vns - \vs
@@ -262,12 +261,12 @@ The conditional distribution $p\given{\mathbf{X}}{\mathbf{Y}=\mathbf{y}}$ is the
 
 The question is now is to see if it is possible to learn $\mu_{\given{X}{Y}}$ and $\Sigma_{\given{X}{Y}}$ using a \cvae{}.
 
-\begin{figure}
-\begin{center}
-\includegraphics[width=0.8\textwidth]{img/trivariate}
-\caption{Example showing density for each univariate distribution given samples from a trivariate distribution $p(s, a, s')$.}
-\end{center}
-\end{figure}
+% \begin{figure}
+% \begin{center}
+% \includegraphics[width=0.8\textwidth]{img/trivariate}
+% \caption{Example showing density for each univariate distribution given samples from a trivariate distribution $p(s, a, s')$.}
+% \end{center}
+% \end{figure}
 
 \subsection{Training procedure}
 
@@ -352,27 +351,27 @@ In the following experiments when we refer to friction we mean isotropic tangent
 \begin{subfigure}{\textwidth}
   \centering
   \begin{overpic}[trim=800 100 800 300,clip,width=0.3\textwidth]{img/windyslope/traj/windyslope-real-0}
-      \put(2,2) {\color{white}$0s$}
+      \put(2,2) {\color{white}$t=0$}
   \end{overpic}
-  \begin{overpic}[trim=800 100 800 300,clip,width=0.3\textwidth]{img/windyslope/traj/windyslope-real-50}
-      \put(2,2) {\color{white}$2s$}
+  \begin{overpic}[trim=800 100 800 300,clip,width=0.3\textwidth]{img/windyslope/traj/windyslope-real-all-obstacle-50}
+      \put(2,2) {\color{white}$t=50$}
   \end{overpic}
-  \begin{overpic}[trim=800 100 800 300,clip,width=0.3\textwidth]{img/windyslope/traj/windyslope-real-100}
-      \put(2,2) {\color{white}$4s$}
+  \begin{overpic}[trim=800 100 800 300,clip,width=0.3\textwidth]{img/windyslope/traj/windyslope-real-all-obstacle-100}
+      \put(2,2) {\color{white}$t=100$}
   \end{overpic}
 \end{subfigure}
 
-\caption{The Windy Slope scenario, where a box with hidden inner content is placed on a sloping surface exposed to wind. A cylindrical obstacle also placed on the surface. Modelling contact is difficult and and should make predicting the output slightly harder. This figure shows 10 different outcomes given parameters samples from the slightly noisy \textit{real} parameter distributions: $\pfriction \sim \N(0.23, 0.01^2)$, $\pcom \sim \N(0.21, 0.04^2)$ and $\pwind \sim \N(-1.7, 0.05^2)$. The positions and orientations of the box have been superimposed in each image to give a sense of the randomness. The choice of means were picked at random, and the variances were selected to be small yet slightly stochastic to resemble the unpredictability of the real world.}
+\caption{The Windy Slope scenario, where a box with hidden inner content is placed on a sloping surface exposed to wind. The figure shows the environment at different timesteps $t$, and the position and orientation of the box have been superimposed in each image to give a sense of the randomness over time. The trajectory depends on samples from the slightly noisy \textit{real} parameter distributions: $\pfriction \sim \N(0.23, 0.01^2)$, $\pcom \sim \N(0.11, 0.04^2)$ and $\pwind \sim \N(-1.7, 0.05^2)$. The choice of means were picked at random, and the variances were selected to be small yet slightly stochastic to resemble the unpredictability of the real world.}
 \label{fig:windyslope_real}
 \end{figure}
 
 \begin{figure}
 \begin{subfigure}{\linewidth}
     \centering
-    \begin{overpic}[trim=800 100 400 300,clip,width=0.4\linewidth]{img/windyslope/traj/windyslope-fake-wind-50}
+    \begin{overpic}[trim=800 100 800 300,clip,width=0.4\linewidth]{img/windyslope/traj/windyslope-fake-wind-50}
         \put(2,2) {\color{white}$2s$}
     \end{overpic}
-        \begin{overpic}[trim=800 100 400 300,clip,width=0.4\linewidth]{img/windyslope/traj/windyslope-fake-wind-99}
+        \begin{overpic}[trim=800 100 800 300,clip,width=0.4\linewidth]{img/windyslope/traj/windyslope-fake-wind-99}
         \put(2,2) {\color{white}$4s$}
     \end{overpic}
     \caption{$\vec{\pwind} \sim \N(-1.25,0.5)$ with $\vec{\pfriction}$ and $\vec{\pcom}$ fixed.}
@@ -422,17 +421,17 @@ In the following experiments when we refer to friction we mean isotropic tangent
 
 A first scenario was constructed using MuJoCo in order to see if the \dettostoc{} algorithm can predict the next state given the current state while only simulating passive dynamics.
 
-In this scenario, which can be seen in Figure \ref{fig:windyslope_real} and Figure \ref{fig:windyslope}, an object is placed on a sloping surface. To make the scenario more challenging and to emulate a situation where a parameter cannot be measured, another object is placed inside the box at an unknown position, thus altering the center of mass of the box. How the box moves on the surface depends on the tangential friction coefficients between the surface and the box, $\pfriction$, its center of mass, $\pcom$, as well as viscous, lift and drag forces caused by wind, $\pwind$.
+In this scenario, which can be seen in Figure \ref{fig:windyslope_real} and Figure \ref{fig:windyslope}, an object is placed on a sloping surface. To make the scenario more challenging and to emulate a situation where a parameter cannot be measured, another object is placed inside the box at an unknown position, thus altering the center of mass of the box. How the box moves on the surface depends on the tangential friction coefficients between the surface and the box, $\pfriction$, its center of mass, $\pcom$, as well as viscous, lift and drag forces caused by wind, $\pwind$. A fixed cylindrical obstacle also placed in the middle of the surface, as correctly modelling contact is difficult and should make predicting the output slightly harder.
 
 The goal is now to predict the next state $\vns$ given current state $\vs$, with no knowledge of the \textit{real} variables for friction and wind. The state is an 18-dimensional vector consisting of the current position, orientation, linear and angular velocity of the object.
 
-Following the \dettostoc{} algorithm outlined in \ref{det2stoc:algorithm}, we define initial distributions in parameter space $\vec{\psi}$ as wide truncated Gaussians. For this experiment, these initial estimates are purposely made uninformative as a proof of principle. In reality however, the estimates can be based on observing the dynamics in the real world and trying to replicate the same behavior in the simulator.
+Following the \dettostoc{} algorithm outlined in \ref{det2stoc:algorithm}, we define initial distributions in parameter space $\vec{\psi}$ as wide truncated Gaussians. For this experiment, these initial estimates are purposely made uninformative as a proof of principle. For example, the prior distribution for $\pwind$ implies we do not know which way the wind is blowing. In reality however, the estimates can be based on observing the dynamics in the real world and trying to replicate the same behavior in the simulator.
 
 The position and velocity of the object are recorded every 40ms during four seconds, corresponding to 100 timesteps. Each time the environment is reset, new parameters are sampled from $\vpsi$.
 
 %During the first trial, to keep things less complex, we keep two of the variables fixed while strictly varying the third. This ensures that the particular variable can be identified without interference of the other two variables. The results can be seen in Figure \ref{fig_1_parameter}.
 
-We vary all three parameters: \textit{friction, incline, wind}. The results can be seen in Figure \ref{fig_3_parameters_table}, and visual plots showing the latent space encodings converging towards the \emph{real} parameters Figure \ref{fig:windyslope_latent_space}.
+We vary all three parameters: \textit{friction, center of mass, wind}. The results can be seen in Figure \ref{fig_3_parameters_table}, and visual plots showing the latent space encodings converging towards the \emph{real} parameters Figure \ref{fig:windyslope_latent_space}.
 
 %Then, using \textit{real} data, the \cvae{} is trained to output the next state given current state. We restrict the latent space to be equal to the number of variable parameters, in this case three: \textit{friction, impratio} and \textit{wind}.
 
@@ -440,87 +439,87 @@ We vary all three parameters: \textit{friction, incline, wind}. The results can 
 %In theory, what is likely to happen is that the latent space captures the underlying parameters that would align simulations with the real world.
 %To see if \dettostoc{} can generalize to more than one parameter, we simply choose an arbitrary value for another parameter and collect data in simulation on a range of reasonable values.
 
-\begin{figure}
-    \centering
-    \includegraphics[width=\textwidth]{img/windyslope/windyslope_elbo.png}
-    \caption{ELBO plotted of validation set during training of ''real'' data $\vec{\xi}$}
-    \label{fig:my_label}
-    \todo[inline]{Will fix this plot.}
-\end{figure}
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=\textwidth]{img/windyslope/windyslope_elbo.png}
+%     \caption{ELBO plotted of validation set during training of ''real'' data $\vec{\xi}$}
+%     \label{fig:my_label}
+%     \todo[inline]{Will fix this plot.}
+% \end{figure}
 
 \begin{table}
 \ra{1.3}
 \centering
+
 \begin{tabular}{lrr}
+\multicolumn{3}{c}{\textsc{windy slope scenario}} \\
 \toprule
-%& \multicolumn{2}{c}{\small\emph{Real}} & \phantom{a} & \multicolumn{2}{c}{\emph{Sim}} \\
-%\cmidrule{2-3} \cmidrule{5-6}
-Model & \# trajectories (samples) & Log likelihood  \\
+Model & \# Trajectories (samples) & Log likelihood  \\
 \midrule
 %\cvae{} (baseline) & 5 (500) & 22.09 \\
-% 67.285225  65.5517 65.54707 64.27985 68.14507
-\cvae{} (baseline) & 10 (1000) & 66.16 $\pm$ 0.69\\
+
+% delta 10 68.30329 71.555916 70.52932 70.049164 66.66855 72.10237
+\cvae{} (baseline) & 10 (1000) & 69.42 $\pm$ 1.73\\
 
 % 20: 85.45479
 % 92.60568
 %\cvae{} (baseline) & 100 (10000) & 37.14 \\
 %\cvae{} (baseline) & 500 (50000) & 41.54 \\
 
-\dettostoc{} (1 iter) & 10 (1000) & -38.49 $\pm$ 0.54 \\
-\dettostoc{} (2 iter) & 10 (1000) & 44.39 $\pm$  \\
-\dettostoc{} (3 iter) & 10 (1000) & 79.36 $\pm$ 0.0056 \\
-\dettostoc{} (3 iter) & 10 (1000) & 87.24 $\pm$ 0.068 \\
+\dettostoc{} (1 iter) & 10 (1000) & 69.26 $\pm$ 0.54 \\
+\dettostoc{} (2 iter) & 10 (1000) & 73.72 $\pm$ 0.33 \\
+\dettostoc{} (3 iter) & 10 (1000) & 74.36 $\pm$ 0.61 \\
+
+% 74.901566 74.901566
+\dettostoc{} (4 iter) & 10 (1000) & \textbf{75.24 $\pm$ 0.11} \\
 
 \bottomrule
 \end{tabular}
-\caption{Log probability results test set on the windy slope scenario.}
+\bigskip
+
+\caption{Log likelihood results test set on the Windy Slope scenario. The baseline model has seen a total of 1000 \emph{real} samples. So has the \dettostoc{} model, however, it has also been trained on simulated data, parameterized by $\vpsi$ that we learned. We selected 1000 samples, or 10 trajectories, as a number that would be feasible to collect in the real world for most scenarios.}
 \label{fig:windyslope_logprob}
 \end{table}
 
 We compare the results of \dettostoc{} against a \textbf{baseline} \cvae{} with the same number of layers and hidden units. This baseline \cvae{} is trained strictly on \emph{real} data and serves as an indication of the predictive performance without alignment with simulation data.
-The log likelihood of the test set gives an indication of the quality of the predictions, but it is not very useful in order to understand how accurate the predictions are. It is obvious that the log likelihood of \dettostoc{} is better than a \cvae{} baseline that has only trained on the \emph{real} data. So to instead better understand how \dettostoc{} performs, we compare it to the true underlying dynamics of the system $p \given{\vns}{\vs}$. To do this, we initialize the physics simulator with a fixed state $\vs$, sample from $\vec{\psi}^{(real)}$ and simulate passive dynamics to generate $\vns$. This will give us a probability distribution over the next state $\vns$ that we can compare to the results $\ptheta \given{\vns}{\vs}$ of the \cvae{}. The results for the position and linear velocity can be seen in \ref{fig:output_distribution_step1_posvel_dettostoc} and \ref{fig:output_distribution_step50_posvel_baseline}. The full state observation visualization can be found in appendix \ref{appendix}.
+The log likelihood of the test set gives an indication of the quality of the predictions, but it is not very useful in order to understand how accurate the predictions are. It is obvious that the log likelihood of \dettostoc{} is better than a \cvae{} baseline that has only trained on the \emph{real} data. So to instead better understand how \dettostoc{} performs, we compare it to the true underlying dynamics of the system $p \given{\vns}{\vs}$. To do this, we initialize the physics simulator with a fixed state $\vs$, sample from the \emph{real} parameter distribution $\vth$ and simulate passive dynamics to generate $\vns$. This will give us a probability distribution over the next state $\vns$ that we can compare to the results $\ptheta \given{\vns}{\vs}$ of the \cvae{}. The results for the position and linear velocity can be seen in Figure \ref{fig:output_distribution_step50_posvel_dettostoc} and \ref{fig:output_distribution_step50_posvel_baseline}. The full state observation visualization can be found in Appendix \ref{appendix:a}.
 
 \begin{figure}
 \centering
 \begin{subfigure}{\textwidth}
-    \includegraphics[trim=0 1370 0 50,clip,width=1.0\textwidth]
-    {img/windyslope/output/windyslope_output_det2stoc2_dist_10_step1_iter4.png}
-    \caption{Output predictions $p_{\vph}\protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=1$ for iteration 4 of \dettostoc{}.}
+    \includegraphics[trim=0 1650 0 50,clip,width=1.0\textwidth]
+    {img/windyslope/output/output_distribution_step1_delta_all}
+    \caption{$t=1$}
     \label{fig:output_distribution_step1_posvel_dettostoc}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
     \centering
-    \includegraphics[trim=0 1370 0 50,clip,width=1.0\textwidth]
-    {img/windyslope/output/windyslope_output_det2stoc2_dist_10_step50_iter4.png}
-    \caption{Output predictions $p_{\vph}\protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=50$ for iteration 4 of \dettostoc{}.}
+    \includegraphics[trim=0 1650 0 50,clip,width=1.0\textwidth]
+    {img/windyslope/output/output_distribution_step50_delta_all}
+    \caption{$t=50$}
     \label{fig:output_distribution_step50_posvel_dettostoc}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
-    \includegraphics[trim=0 1370 0 50,clip,width=1.0\textwidth]
-    {img/windyslope/output/windyslope_output_det2stoc2_dist_10_step100_iter4.png}
-    \caption{Output predictions $p_{\vph}\protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=100$ for iteration 4 of \dettostoc{}.}
-    \label{fig:output_distribution_step100_posvel_dettostoc}
+    \centering
+    \includegraphics[trim=0 1650 0 50,clip,width=1.0\textwidth]
+    {img/windyslope/output/output_distribution_step100_delta_all}
+    \caption{$t=100$}
+    \label{fig:output_distribution_step50_posvel_dettostoc}
 \end{subfigure}
-\begin{subfigure}{\textwidth}
-    \includegraphics[trim=0 1370 0 0,clip,width=1.0\textwidth]
-    {img/windyslope/output/windyslope_output_baseline_dist_10_step50.png}
-    \caption{Output predictions $p_{\vph}\protect\given*{\vns}{\vs}$ for a randomly sampled state at $t=50$ for CVAE (baseline).}
-    \label{fig:output_distribution_step50_posvel_baseline}
-\end{subfigure}
-% \caption{Distribution over position outputs (x,y,z) from the simulator and the trained stochastic simulator. The full state outputs is found in Appendix \ref{appendix:a}.}
-\todo[inline]{This is old data, will refresh with new.}
-
+\caption{Prediction distributions $\ptheta \protect \given*{\vns}{\vs}$ over position outputs (x,y,z) for a randomly sampled state at different timesteps $t$ for the simulator, the trained stochastic simulator trained with \dettostoc{} and the baseline. Above the plots are log likelihood of the \emph{real} output as well as sample KL divergence between the true distribution and the predicted distribution.
+The full state output and additional timesteps can be found in Appendix \ref{appendix:a}.}
 \end{figure}
 
 \subsection{Retrieving parameter predictions using latent space codes}
 
-As an experiment to see if \dettostoc{} can recover the parameters used by \fsimulator{}, we compute the expected mean and standard deviation of the posterior over the \emph{real} training set $\vec{\xi}^{(real)}_{train}$. Since we have included the target $\vns$ in the posterior formulation, and pre-trained the decoder to match \fsimulator{}, samples from $\qphi \given{\vz}{\vs, \vns}$ should approach the true parameters $\vth$. The results can be seen in Table \ref{fig_3_parameters_table} and visually in Figure \ref{fig:windyslope_latent_space}.
+As an experiment to see if \dettostoc{} can recover the \emph{real} parameters used by the simulator $\fsimulator_{\vth}$, we compute the expected mean and standard deviation of the posterior over the \emph{real} training set $\trajreal_{train}$. Since we have included the target $\vns$ in the posterior formulation, and pre-trained the decoder to match \fsimulator{}, samples from $\qphi \given{\vz}{\vs, \vns}$ should align with the true parameters $\vth$. The results can be seen in Table \ref{fig_3_parameters_table} and visually in Figure \ref{fig:windyslope_latent_space}.
 %$\E_{\given{\vz}{\vs, \vns}}$
 
 \begin{table}[h!]
 \ra{1.3}
 \centering
-\begin{tabular}{lrcrrcrr}
+\begin{tabular}{lrrcrr}
+\multicolumn{6}{c}{\textsc{windy slope scenario}} \\
 \toprule
 %& \multicolumn{2}{c}{\small\emph{Real}} & \phantom{a} & \multicolumn{2}{c}{\emph{Sim}} \\
 %\cmidrule{2-3} \cmidrule{5-6}
@@ -529,12 +528,13 @@ As an experiment to see if \dettostoc{} can recover the parameters used by \fsim
 % $\N$(0.25, 0.1) 
 % $\N$(0, 0.2)
 % $\N$(-1, 1.0) 
+
 $\pfriction$ & 0.23 & 0.2308 && 0.01 & 0.0109 \\
-$\pcom$ & 0.11 & 0.1100 && 0.04 & 0.0370 \\
-$\pwind$ & -1.7 & -1.7153 && 0.05 & 0.2420 \\
+$\pcom$ & 0.11 & 0.0985 && 0.04 & 0.0370 \\
+$\pwind$ & -1.7 & -1.7075 && 0.05 & 0.0667 \\
 \bottomrule
 \end{tabular}
-\caption{Latent representations of parameters $\vpsi$ in the windy slope scenario after running three iterations of \dettostoc{} starting from uninformed priors for the parameters $\vpsi$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\trajreal_{train}$.}
+\caption{Latent representations of parameters $\vpsi$ in the windy slope scenario after running three iterations of \dettostoc{} starting from fairly uninformative priors for the parameters $\vpsi$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\trajreal_{train}$. The initial prior and posterior parameters after each iteration of \dettostoc{} can be found in Appendix \ref{appendix:a}.}
 \label{fig_3_parameters_table}
 \end{table}
 
@@ -542,17 +542,17 @@ $\pwind$ & -1.7 & -1.7153 && 0.05 & 0.2420 \\
 \centering
 \captionsetup{size=footnotesize}
 \begin{subfigure}{\linewidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/iter0}
-  \caption{Initial estimates $\vpsi_0$}
+  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/latent_encoding_iter0}
+  \caption{$\vpsi_0$: initial estimates}
   \label{fig_3_parameters_0}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
-  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/new/latent_encoding_iter3}
-  \caption{3rd iteration of \dettostoc{} $\vpsi_3$}
+  \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/latent_encoding_iter3}
+  \caption{$\vph3$ after 3rd iteration of \dettostoc{}}
 \end{subfigure}
 \caption{Plots show the learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\vec{\xi}^{real}$ as normalized histograms after 3 iterations of \dettostoc{}.
 From left-to-right, the latent space codings show tangential friction, center of mass and wind. %The prior parameters $\vpsi$ for each iteration of \dettostoc{} are included for clarity in a lighter color, along with the true distribution $\theta_{\mu, \sigma}$ in black dashes.}
-The \emph{real} distribution of the parameters $\theta_{\mu, \sigma}$ in drawn with black dashes. Plots from previous iterations can be found in Appendix \ref{appendix:a}.}
+The \emph{real} distribution of the parameters $\theta_{\mu, \sigma}$ in drawn with black dashes. Plots from previous iterations can be found in Figure \ref{fig:windyslope_latent_space_full} in Appendix \ref{appendix:a}.}
 \label{fig:windyslope_latent_space}
 \end{figure}
 
@@ -563,7 +563,7 @@ A second scenario was constructed in MuJoCo that introduces control actions affe
 
 The robot is an ABB IRB14000 YuMi with 2 arms, each with 7 joints corresponding to 14 degrees of freedom. The joints are actuated by velocity controllers. The real robot and the robot modelled in MuJoCo can be seen in Figure \ref{fig:robots}. 
 
-At the start of each episode, the arms are initialized to a default pose and the initial location of the box is placed randomly within a $0.2m \times 0.2m$ square area. The goal is kept fixed in the center of the table. The true friction and center of mass distributions are listed in table \ref{table:yumi-dist}.
+At the start of each episode, the arms are initialized to a default pose and the initial location of the box is placed randomly within a $0.2m \times 0.2m$ square area. The goal is kept fixed in the center of the table. The true friction and center of mass distributions are listed in Table \ref{table:yumi_parameters}.
 
 The goal is now to predict the next state $\vns$ given $\vs$ and $\va$. The state consists of the position and velocity of all 14 joints as well as the position, rotation and velocity of the box.
 
@@ -573,12 +573,15 @@ The goal is now to predict the next state $\vns$ given $\vs$ and $\va$. The stat
 \begin{figure}%
     \centering
     \begin{subfigure}{0.4\textwidth}
-    \includegraphics[width=1\textwidth]{img/yumi/yumi-pose-sim}
+    \includegraphics[width=1\textwidth,trim=0 0 0 0,clip]{img/yumi/yumi-pose-real}
     \end{subfigure}
+    % \begin{subfigure}{0.4\textwidth}
+    % \includegraphics[width=1\textwidth]{img/yumi/yumi-pose-sim}
+    % \end{subfigure}
     \begin{subfigure}{0.4\textwidth}
-    \includegraphics[width=1\textwidth]{img/yumi/yumi-pose-real}
+    \includegraphics[width=1\textwidth,trim=800 240 810 250,clip]{img/yumi/yumi-pose-sim2}
     \end{subfigure}
-    \caption{The simulated robot in MuJoCo and the real ABB IRB14000 robot.}
+    \caption{(Left) The real ABB YuMi IRB14000 robot. (Right) The robot modelled in MuJoCo for the box pushing scenario. The environment is considered complete when the yellow dot on the box is within the green sphere in the middle of the table.}
     \label{fig:robots}%
 \end{figure}
 
@@ -586,6 +589,7 @@ The goal is now to predict the next state $\vns$ given $\vs$ and $\va$. The stat
 \ra{1.3}
 \centering
 \begin{tabular}{lrrcrr}
+\multicolumn{6}{c}{\textsc{yumi box pushing scenario}} \\
 \toprule
 %& \multicolumn{2}{c}{\small\emph{Real}} & \phantom{a} & \multicolumn{2}{c}{\emph{Sim}} \\
 %\cmidrule{2-3} \cmidrule{5-6}
@@ -595,8 +599,8 @@ $\pfriction$ & $0.28$ & $0.3404$ && $0.01$ & $0.1093$ \\
 $\pcom$ & $0.035$ & $ 0.0367$ && $0.005$ & $0.0048$ \\
 \bottomrule
 \end{tabular}
-\caption{Latent representations of parameters $\psi$ in the Windy Slope scenario after running two iterations of \dettostoc{} starting from uninformed priors for the parameters $\vec{\psi}$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\vec{\xi}^{real}$.}
-\label{fig_3_parameters_table}
+\caption{Latent representations of parameters $\psi$ in the Windy Slope scenario after running two iterations of \dettostoc{} starting from uninformed priors for the parameters $\vec{\psi}$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\vec{\xi}^{real}$. \todo[inline]{These numbers will be updated with better results}}
+\label{table:yumi_parameters}
 \end{table}
 
 
@@ -604,6 +608,7 @@ $\pcom$ & $0.035$ & $ 0.0367$ && $0.005$ & $0.0048$ \\
 \ra{1.3}
 \centering
 \begin{tabular}{lrr}
+\multicolumn{3}{c}{\textsc{yumi box pushing scenario}} \\
 \toprule
 %& \multicolumn{2}{c}{\small\emph{Real}} & \phantom{a} & \multicolumn{2}{c}{\emph{Sim}} \\
 %\cmidrule{2-3} \cmidrule{5-6}
@@ -618,7 +623,7 @@ Model & \# \emph{Real} trajectories (samples) & Log likelihood over $\trajreal_{
 
 \bottomrule
 \end{tabular}
-\caption{Log likelihood results test set on the YuMi scenario. \dettostoc{} has only seen 1000 \emph{real} samples but still outperforms model that has trained on 9000 samples.}
+\caption{Log likelihood results over the test set on the YuMi Box Pushing Scenario. \dettostoc{} has only seen 1000 \emph{real} samples but still outperforms the baseline model that has trained on 90000 samples.}
 \label{fig:windyslope_logprob}
 \end{table}
 
@@ -636,6 +641,6 @@ Model & \# \emph{Real} trajectories (samples) & Log likelihood over $\trajreal_{
   \caption{3rd iteration of \dettostoc{}}
 \end{subfigure}
 \caption{Plots show the learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\vec{\xi}^{real}$ in the YuMi scenario for four iteration of \dettostoc{}.
-The parameters correspond (from left-to-right) to tangential friction $\pfriction$ and center of mass $\pcom$. The true distributions $\vth_{\mu, \sigma}$ are outlined in black dashes. In this scenario, \dettostoc{} struggles to match $\pfriction{}$ with the true distribution $\th_\textsc{friction}$. This is likely due to the fact that the learned policy pushes the box in small increments, and small changes in friction do not cause any noticable difference. The posterior for all iterations can be found in the appendix.}
+The parameters correspond (from left-to-right) to tangential friction $\pfriction$ and center of mass $\pcom$. The true distributions $\vth_{\mu, \sigma}$ are outlined in black dashes. In this scenario, \dettostoc{} struggles to match $\pfriction{}$ with the true distribution $\theta_\textsc{friction}$. This is likely due to the fact that the learned policy pushes the box in small increments, and small changes in friction do not cause any noticable difference. The posterior for all iterations can be found in the appendix.}
 \label{fig:yumi/latentspace}
 \end{figure}
