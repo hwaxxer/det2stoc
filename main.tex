@@ -33,6 +33,9 @@
 \usepackage{enumitem}  % for tighter list spacing
 \usepackage{hyperref} % for URLs
 
+
+\captionsetup{labelfont=bf}
+
 % Smaller bullets in lists.
 \newlength{\mylen}
 % \setbox1=\hbox{$\bullet$}\setbox2=\hbox{\tiny$\bullet$}
@@ -61,7 +64,7 @@
 \DeclarePairedDelimiterX{\infdivx}[2]{\big(}{\big)}{%
   #1\;\delimsize\|\;#2%
 }
-\newcommand{\KL}{D_{\mathcal{KL}}\infdivx}
+\newcommand{\KL}{\mathcal{KL}\infdivx}
 \newcommand{\N}{\mathcal{N}}
 
 \newcommand{\vae}{\textsc{vae}}
@@ -87,8 +90,8 @@
 \newcommand{\ptheta}{p_{\theta}}
 \newcommand{\qphi}{q_{\phi}}
 
-\newcommand{\trajsim}{\xi^{sim}}
-\newcommand{\trajreal}{\xi^{real}}
+\newcommand{\trajsim}{\vec{\xi}^{sim}}
+\newcommand{\trajreal}{\vec{\xi}^{real}}
 
 \newcommand{\ws}{Windy Slope}
 \newcommand{\yp}{YuMi Pusher}
@@ -124,9 +127,9 @@
 % ABSTRACT
 % ======================================================
 \begin{abstract}
-Simulation is commonly used to train agents in Reinforcement Learning since they provide an affluence of data that in many cases can be generated faster than real-time. However, the behaviors learned by the agent will be specific to attributes of the simulator and may not perform well when transfered to the real world. This thesis describes an algorithm that can be used to minimize the discrepancy between simulation and reality. Using this algorithm, it is possible to both identify parameters of the simulator whose true values are unknown, as well as replacing a deterministic simulator with a generative model that can produce output that is close to real-world dynamics.
+Simulation is commonly used to train agents in Reinforcement Learning since they provide an abundance of data that in many cases can be generated faster than real-time. However, the behaviors learned by the agent will be specific to attributes of the simulator and may not perform well when transferred to the real world. This thesis describes an algorithm that can be used to minimize the discrepancy between simulation and reality. Using this algorithm, it is possible to both identify parameters of the simulator whose true values are unknown, and learn a generative model that can produce output that is close to real-world dynamics.
 
-We first demonstrate this algorithm on a problem that can be solved analytically. We then show that the algorithm can be applied to more elaborate environments with physics simulation involving contact between objects and control actions.
+We first show how this algorithm works on a problem that can be solved analytically. We then demonstrate that the algorithm successfully handles more elaborate environments with physics simulation involving contact between objects and control actions.
 
 %And finally, we show that the algorithm can be used to facilitate training an agent in simulation and transferring the learned policy to a real robot.
 \end{abstract}
@@ -138,7 +141,7 @@ We first demonstrate this algorithm on a problem that can be solved analytically
 
 \section*{Acknowledgements}
 
-This thesis would not have been possible without my supervisor Rika Antonova, whose expertise paved the way for the methodology in this work. Ever the inspiring mentor; demanding more when I made progress and being patient when I struggled, whether in regard to the thesis or hardships in my personal life. Always available for a discussion, and unfailingly replying within an instant to emails in the middle of the night.Thank you.
+This thesis would not have been possible without my supervisor Rika Antonova, whose expertise paved the way for the methodology in this work. Ever the inspiring mentor; demanding more when I made progress and being patient when I struggled, whether in regard to the thesis or hardships in my personal life. Always available for a discussion, and unfailingly replying within an instant to emails in the middle of the night. Thank you.
 
 % ======================================================
 \tableofcontents
@@ -147,19 +150,17 @@ This thesis would not have been possible without my supervisor Rika Antonova, wh
 % ======================================================
 
 \input{inputs/1-introduction}
-
 \input{inputs/2-background}
-
 \input{inputs/3-method}
-
-\input{inputs/4-conclusions} 
+\input{inputs/4-experiments}
+\input{inputs/5-conclusions}
 
 %======================================================
 \printbibliography[heading=bibintoc]
 
 \appendix
 %======================================================
-\input{inputs/5-appendix}
+\input{inputs/6-appendix}
 %======================================================
 \tailmatter
 %======================================================

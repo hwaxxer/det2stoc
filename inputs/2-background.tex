@@ -6,7 +6,7 @@ This chapter introduces the relevant theory required to follow the main aspects 
 %A \emph{variational autoencoder} (\vae{}) was chosen to model a stochastic simulator. A \vae{} is a probabilistic model, but relatively similar in spirit to standard non-probabilistic autoencoder. Both the autoencoder and the \vae{} employ neural networks and with that in mind, a short introduction to deep learning will be given in this chapter before more detailed description of \vae{} on which the methodology for this project builds upon.
 
 \section{Deep neural networks}
-\subsection{Neural networks}
+
 The most basic form of neural network is a feedforward network, also known as a \emph{multilayer perceptron} (MLP). Feedforward networks constitute the foundation of deep learning and are in essence differentiable function approximators. That is, they approximate the function $\vy=f^{*}(\vx)$ using the mapping $\vy = f(\vx; \vth)$ and learn the parameters $\pmb{\theta}$ that best produce the desired output $\vy$.
 
 A feedforward network takes the form of a \textit{computational graph}. A computational graph is a directed graph where each node is either a variable, such as input, or an operation. These operations are called \emph{hidden units} or \emph{neurons}, and are organized in groups called \emph{layers}. The graph describes how the input flows through these layers.
@@ -92,7 +92,7 @@ During training of a neural network, the input is propagated through the graph a
 
 \section{Variational Autoencoder}
 
-\subsection{Autoencoding and Variational Inference}
+%\subsection{Autoencoding and Variational Inference}
 
 The autoencoder is a specific model trained to produce its own input. This model consists of two connected neural networks. The first network maps the input $\vx = (x_1, ..., x_D)$ to a latent output $\vz = (z_1, ..., z_K)$ and is called \emph{encoder}. The second network maps the latent vector to some output $\hat{\vx}$ and is called \emph{decoder}. Typically, the capacity of the network is limited through a bottleneck, which forces the autoencoder to learn a more compact and salient representation of the data. This makes autoencoders good at dimensionality reduction of data. The networks are trained jointly using a measure of reconstruction loss, for example the euclidean norm between the input $\vx$ and output $\hat{\vx}$.
 
@@ -149,7 +149,7 @@ and is assumed to be intractable. This means that finding the exact solution to 
 \edge[shorten <=3pt] {theta} {x} ; %
 \plate[inner sep=0.3cm] {M} {(z)(x)} {$M$}; %
 \end{tikzpicture}
-\caption{A graphical model of a VAE. The solid lines represent the generative process, and the dashed lines represent the inference process. The rectangular plate notation means we can sample M times from $\vz$ and $\vx$ while keeping $\theta$ fixed. The dashed lines denote the encoding process.}
+\caption{A graphical model of a VAE \parencite{kingma2013auto}. The solid lines represent the generative process, and the dashed lines represent the inference process. The rectangular plate notation means we can sample M times from $\vz$ and $\vx$ while keeping $\theta$ fixed. The dashed lines denote the encoding process.}
 \end{figure}
 
 \begin{figure}
@@ -233,36 +233,28 @@ The generative model maximizes Equation \ref{eq:maximize_vae}. If the choice of 
 
 That is, the likelihood $p_{\theta}\given{\vx}{\vz}$ has mean $\mu = f(\vz; \theta)$ and diagonal covariance $\Sigma = \sigma^2 \times \mathbf{I}$. This distribution can be modelled by a function approximator such as a neural network. If we model $p_{\theta}(\vz)$ as an uninformed Gaussian prior $\mathcal{N}(\boldsymbol{0}, \boldsymbol{I})$, we can take the gradient of the equation and and optimize it using gradient descent. However, it is generally intractable to simply sample from $\vz$ and compute $p(\vx) \approx \frac{1}{N}\sum_i^N p \given{\vx}{\vz^{(i)}}$ if $N$ is large. The reason for this is that for most $\vz^{(i)}$, $\ptheta \given{\vx}{\vz^{(i)}}$ will be very low, so the idea is to try to only sample instances of $\vz$ that are likely to have produced $\vx$.
 
-As mentioned previously, we can approach this problem with a new function $\qphi \given{\vz}{\vx}$ that finds values of $\vz$ that are much more likely under $\qphi$ than under $\ptheta$. We can express the desire to have $\vz$ produced under $\qphi \given{\vz}{\vx}$ to be similar to those produced under $\ptheta \given{\vz}{\vx}$ using the Kullbach-Liebler (KL) divergence measure (dropping the indices $\theta, \phi$ for brevity)
-
-\begin{equation}
-\begin{split}
-\KL{q \given{\vz}{\vx}}{p \given{\vz}{\vx}} &= \E_{q \given{\vz}{\vx} } \big [\log{q \given{\vz}{\vx}} - \log{p \given{\vz}{\vx}} \big ] \\
-%- \int p \given{\vz}{\vx} \log{p \given{\vz}{\vx}}d\vz - \\
-%& \quad \quad \big(- \int p \given{\vz}{\vx} \log{q \given{\vz}{\vx})}d\vz \big) \\
-%\E_{q \given{\vz}{\vx} } \big [\log{q \given{\vz}{\vx}} - \log{p \given{\vz}{\vx}} \big ] \\
-%&= \bigg{\{} \text{Expand $P(z|X)$ using Bayes' theorem \bigg{\}}} \\
-%&= \E_{q \given{\vz}{\vx} }\big {[} \log{Q(z|X)} - \big{(} \log{P(X|z)} + \log{P(z)} - \log{P(X)} \big{)} \big{]}\\
-&= \E_{q \given{\vz}{\vx} }\big {[} \log{q \given{\vz}{\vx})} - \overbrace{ \big{(} \log{p \given{\vx}{\vz}} + \log{p(z)} - \log{p(\vx)} \big{)} }^{\text{Expand $p\given{\vz}{\vx}$ using Bayes' theorem}} \big ]\\
-&= \E_{q \given{\vz}{\vx} } \big{[} \log{q \given{\vz}{\vx}} - \log{p \given{\vx}{\vz}} - \log{p(\vz)} \big{]} + \log{p(\vx)} \\
-&= \E_{q \given{\vz}{\vx} } \big{[} \KL{q \given{\vz}{\vx}}{p(\vz)} - \log{p \given{\vx}{\vz}} \big{]} + \log{p(\vx)}
-\end{split}
-\label{kl-eq}
-\end{equation}
-
-This gives the key equation to \vae{}s known as the Evidence Lower Bound (ELBO)
-
+As mentioned previously, we can approach this problem with a new function $\qphi \given{\vz}{\vx}$ that finds values of $\vz$ that are much more likely under $\qphi$ than under $\ptheta$. We can express the desire to have $\vz$ produced under $\qphi \given{\vz}{\vx}$ to be similar to those produced under $\ptheta \given{\vz}{\vx}$ using the Kullbach-Liebler (KL) divergence measure
 \begin{align}
-%\log{P(X)} - D[Q(z|X) || P(z|X)] &= \E_{q \given{\vz}{\vx} } \big{[} \log{P(X|z)} + \log{P(z)} - \log{Q(z|X)} \big{]} \\
-\nonumber \lefteqn{\log{\ptheta(\vx)} - \KL{\qphi \given{\vz}{\vx}}{\ptheta \given{\vz}{\vx}}} \\
-& & & = \E_{\qphi \given{\vz}{\vx} } \big{[} \log{\ptheta \given{\vx}{\vz}} - \KL{\qphi \given{\vz}{\vx}}{\ptheta(\vz)} \big{]}
-%\end{split}
-\label{eq_vae}
+\label{kl-eq}
+\lefteqn{\KL{\qphi \given{\vz}{\vx}}{\ptheta \given{\vz}{\vx}} =
+\E_{\qphi \given{\vz}{\vx} } \big [\log{\qphi \given{\vz}{\vx}} - \log{\ptheta \given{\vz}{\vx}} \big ] \nonumber}\\
+& & & = \E_{\qphi \given{\vz}{\vx} }\big {[} \log{\qphi \given{\vz}{\vx})} - \overbrace{ \big{(} \log{\ptheta \given{\vx}{\vz}} + \log{\ptheta(\vz)} - \log{\ptheta(\vx)} \big{)} }^{\text{Expand $\log \ptheta \given{\vz}{\vx}$ using Bayes' theorem}} \big ] \nonumber\\
+& & & = \E_{\qphi \given{\vz}{\vx} } \big{[} \log{\qphi \given{\vz}{\vx}} - \log{\qphi \given{\vx}{\vz}} - \log{\ptheta(\vz)} \big{]} + \log{\ptheta(\vx)} \nonumber \\
+& & & = \KL{\qphi\given{\vz}{\vx}}{\ptheta(\vz)} - \E_{\qphi\given{\vz}{\vx} } \big{[} \log{\ptheta \given{\vx}{\vz}} \big{]} + \log{\ptheta(\vx)}
 \end{align}
 
-Maximizing the left hand side of this equation means that we are maximizing $\log{\ptheta(\vx)}$ and subsequently minimizing an error term $\KL{\qphi \given{\vz}{\vx}}{\ptheta \given{\vz}{\vx}}$ since the KL divergence is always positive. The hope is that $\qphi \given{\vz}{\vx}$ will be very close to $\ptheta \given{\vz}{\vx}$, causing the divergence term to be zero, meaning we are directly optimizing $\log \ptheta(\vx)$. The right hand of the equation side looks much like an autoencoder. The first term can \emph{decode} $\vz$ into $\vx$, and the second term can \emph{encode} $\vx$ into $\vz$. This side of the equation can be optimized with gradient descent.
+This gives the key equation to \vae{}s
+\begin{align}\label{eq:vae}
+\nonumber \lefteqn{\log{\ptheta(\vx)} - \KL{\qphi \given{\vz}{\vx}}{\ptheta \given{\vz}{\vx}} =}\\
+& & & \E_{\qphi \given{\vz}{\vx}} \big{[} \log{\ptheta \given{\vx}{\vz}} \big{]} - \KL{\qphi \given{\vz}{\vx}}{\ptheta(\vz)}
+\end{align}
 
-Now we just need to figure out how to model $\qphi$. A common choice is a Gaussian distribution, $\qphi \given{\vz}{\vx} = \mathcal{N}\given{\vz}{\mu (\vx;\phi), \Sigma(\vx; \phi)}$, where $\phi$ are parameters learned from the data. This results in a KL divergence term that can be computed in closed form:
+The hope is that $\qphi \given{\vz}{\vx}$ will be very close to $\ptheta \given{\vz}{\vx}$, causing the divergence term to be zero, meaning we are directly optimizing $\log \ptheta(\vx)$. The right-hand side of the equation side looks much like an autoencoder. The first term can \emph{decode} $\vz$ into $\vx$, and the second term can \emph{encode} $\vx$ into $\vz$. This side of the equation can be optimized with gradient descent. Maximizing the left-hand side of this equation means that we are maximizing $\log{\ptheta(\vx)}$ and subsequently minimizing an error term, since the KL divergence is always positive. This leads to the Evidence Lower Bound (ELBO)
+\begin{equation} \label{eq:elbo}
+    \log \ptheta(\vx) \geq \mathcal{L}(\vx, \vth, \vph) = \E_{\qphi \given{\vz}{\vx} } \big{[} \log{\ptheta \given{\vx}{\vz}} \big{]} - \KL{\qphi \given{\vz}{\vx}}{\ptheta(\vz)}
+\end{equation}
+
+Now we just need to figure out how to model $\qphi$. A common choice is a Gaussian distribution, $\qphi \given{\vz}{\vx} = \mathcal{N}\given{\vz}{\mu (\vx;\vph), \Sigma(\vx; \vph)}$, where $\vph$ are parameters learned from the data. This results in a KL divergence term that can be computed in closed form:
 
 \begin{align}
 \nonumber \lefteqn{\KL{\mathcal{N}(\mu_0, \Sigma_0)}{\mathcal{N}(\mu_1, \Sigma_1)} =} \\
@@ -273,19 +265,19 @@ Now we just need to figure out how to model $\qphi$. A common choice is a Gaussi
 where $k$ is the dimension of the vector space. This is simplified if we assume an uninformative prior:
 
 \begin{align}
-\nonumber \lefteqn{ \KL{\mathcal{N}(\mu (\vx; \phi), \Sigma (X; \phi)}{ \mathcal{N}(\vec{0}, \vec{I})} =}\\
-& & \frac{1}{2} \bigg{(} \text{tr}(\Sigma (\vx; \phi)) + \mu (\vx; \phi)^\top \mu (\vx; \phi) - k - \log{\det{\Sigma (\vx; \phi)}} \bigg{)}
+\nonumber \lefteqn{ \KL{\mathcal{N}(\mu (\vx; \vph), \Sigma (X; \vph)}{ \mathcal{N}(\vec{0}, \vec{I})} =}\\
+& & \frac{1}{2} \bigg{(} \text{tr}(\Sigma (\vx; \vph)) + \mu (\vx; \vph)^\top \mu (\vx; \vph) - k - \log{\det{\Sigma (\vx; \vph)}} \bigg{)}
 \label{kl-closed-form-eq2}
 \end{align}
 
-The idea is to sample $\vz$ from $\qphi \given{\vz}{\vx}$ and compute $\log{ p_\theta \given{\vx}{\vz}}$ as an approximation of $\E_{\vz \sim \qphi} [\,\log{\ptheta \given{\vx}{z}}\,]$. The output of the encoder network $\qphi$ is a probability distribution, such as the mean and covariance of a Gaussian distribution $\vec{z} \sim \mathcal{N}\big(\mu_{\vz} (\vx; \phi), \Sigma_{\vz} (\vx; \phi)\big)$. However, stochastic units inside the network are not differentiable, and thus it is not possible to backpropagate the error with respect to the parameters of the distribution.
+The idea is to sample $\vz$ from $\qphi \given{\vz}{\vx}$ and compute $\log{ p_\theta \given{\vx}{\vz}}$ as an approximation of $\E_{\vz \sim \qphi} [\,\log{\ptheta \given{\vx}{\vz}}\,]$. The output of the encoder network $\qphi$ is a probability distribution, such as the mean and covariance of a Gaussian distribution $\vec{z} \sim \mathcal{N}\big(\mu_{\vz} (\vx; \vph), \Sigma_{\vz} (\vx; \vph)\big)$. However, stochastic units inside the network are not differentiable, and thus it is not possible to backpropagate the error with respect to the parameters of the distribution.
 
-To solve the problem of non-differentiable units, \parencite{kingma2013auto} suggested a ''trick'' that splits up the network into two parts. We sample an auxiliary variable $\epsilon = \N(\vec{0}, \vec{I})$ and reparameterize $\vz$ with a deterministic function $\vz=g(\vx, \epsilon)$. Assuming a Gaussian distribution over $\vz$, a valid reparameterization is $g(\vx, \epsilon) = \mu(\vx; \phi) + \Sigma(\vx; \phi) \times \epsilon$.
-Thus, we treat the stochastic $\epsilon$ as input which allows backpropagation with gradient descent and maximum likelihood estimates for $\phi$.
+To solve the problem of non-differentiable units, \parencite{kingma2013auto} suggested a ''trick'' that splits up the network into two parts. We sample an auxiliary variable $\epsilon = \N(\vec{0}, \vec{I})$ and reparameterize $\vz$ with a deterministic function $\vz=g(\vx, \epsilon)$. Assuming a Gaussian distribution over $\vz$, a valid reparameterization is $g(\vx, \epsilon) = \mu(\vx; \vph) + \Sigma(\vx; \vph) \times \epsilon$.
+Thus, we treat the stochastic $\epsilon$ as input which allows backpropagation with gradient descent and maximum likelihood estimates for $\vph$.
 %This means we can compute $\mathop{\mathbb{E}}_{\qphi \given{\vz}{\vx} } P(X|z,\theta)$ and simply need to find a way to make it as similar  
 
 
-\subsection{Conditional Variational Autoencoder}
+\section{Conditional Variational Autoencoder}
 
 The Conditional Variational Autoencoder (\cvae{}) is a modification to the original \vae{} which allows for a deep conditional generative model. The \cvae{} models a distribution of the output space as a generative model conditioned on the the input observation. This is done by modulating the prior on the latent variables.
 
@@ -296,28 +288,33 @@ The \cvae{} has a very similar structure to the \vae{} with a recognition networ
 %\subsection*{Variational lower bound of conditional log-likelihood}
 The variational lower bound for \cvae{} with the new output variable $\vy$ is reformulated as follows:
 
-\begin{equation}
-\begin{split}
-\log p_{\theta}\given{\vy}{\vx} &= \KL{q_{\theta}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}} + \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy, \vz}{\vx} \big ]
-\\
-&\geq \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy}{\vx, \vz} \big ]
-\\
-&= \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vz}{\vx} \big ] + \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ]
-\\
-&= -\KL{q_{\phi}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}} + \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ]
-\label{eq_cvae}
-\end{split}
-\end{equation}
+\begin{align}
+\nonumber \lefteqn{\log p_{\theta}\given{\vy}{\vx} = \KL{q_{\theta}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}} +} \\
+& & & \qquad \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy, \vz}{\vx} \big] \nonumber \\
+& & & \geq \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy}{\vx, \vz} \big ]
+\nonumber \\
+& & & = \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vz}{\vx} \big ] + \nonumber \\
+& & & \qquad \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ] \nonumber \\
+& & & = \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ] - \KL{q_{\phi}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}}
+\label{eq:cvae}
+\end{align}
 
-% \subsection{VAE latent spaces}
-% \subsubsection{Disentanglement with VAE}
-
-
-%\subsection*{Learning to predict structured output}
+% \begin{multline}
+% \log p_{\theta}\given{\vy}{\vx} = \KL{q_{\theta}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}} +\\
+% \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy, \vz}{\vx} \big] \\
+% \geq \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vy}{\vx, \vz} \big ] \\
+% = \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ - \log q_{\phi}\given{\vz}{\vx, \vy} + \log p_{\theta}\given{\vz}{\vx} \big ] +  \\
+% \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ] \\
+% = \E{}_{q_{\phi}\given{\vz}{\vx, \vy}} \big [ \log p_{\theta} \given{\vy}{\vx, \vz} \big ] - \KL{q_{\phi}\given{\vz}{\vx, \vy}}{p_{\theta}\given{\vz}{\vx}}
+% \label{eq:cvae}
+% \end{multline}
+And we can write the variational lower bound
+\begin{multline}
+\log \ptheta\given{\vy}{\vx} \geq \mathcal{\tilde{L}}_{\text{CVAE}}(\vx, \vy, \vth, \vph) =\\
+- \KL{q_{\phi}\given{\vz}{\vx, \vy}}{\ptheta \given{\vz}{\vx}} + \frac{1}{N} \sum^N_{n=1} \log \ptheta \given{\vy}{\vx, \vz^{(n)}}
+\end{multline}
 
 In general, \vae{}s are used to \emph{autoencode} its input, and maximizing the ELBO is effective in training deep generative models. However, the same training may not be suitable to predict structured output for a \cvae{}. This is because during training of the \cvae{}, the output $\vy$ is fed as input to the encoder $q_{\theta}\given{\vz}{\vx, \vy}$. As such, the objective during training can be seen as a \emph{reconstruction} of $\vy$. However, during testing or inference, it uses the prior network $p_{\theta}\given{\vz}{\vx}$ to draw samples $\vz$ and \emph{predict} $\vy$. Prediction is considered a harder problem than reconstruction \parencite{Sohn2015}. Sohn et al discuss allocating more weight on the negative KL divergence term in the objective to reduce the gap between the latent encoding during training and testing. They find that this does not yield good results and instead propose to train the \cvae{} in a way that makes the predictions consistent during training and testing. This proposal introduces a objective for a model they call \emph{Gaussian Stochastic Neural Network} (GSNN).
-
-
 \begin{equation}
 \begin{split}
 \mathcal{L}_{\text{GSNN}}(\vx, \vy, \vth, \vph) = \frac{1}{N} \sum_{n=1}^N \log p_\theta \given{\vy}{\vx, \vz^{(n)}}
@@ -330,7 +327,7 @@ This is then combined with the standard \cvae{} objective to form a hybrid objec
 \mathcal{L}_{\text{hybrid}} = \alpha \mathcal{L}_{\text{CVAE}} + (1 - \alpha) \mathcal{L}_{\text{GSNN}}
 \end{equation}
 
-\section{Transfer learning and sim-to-real}
+\section{Transfer learning and Sim-to-Real}
 \subsection{Domain and dynamics randomization}
 
 A simple but powerful approach to transferring RL policies from simulation to the real world is to introduce uncertainty during training. The purpose is to provide enough simulated variability during training such that at test time the model is able to generalize to real-world data. Uncertainty can be applied to the dynamics of the system \parencite{Antonova2017}\parencite{peng} or the domain itself \parencite{tobin}. Both approaches attempt to reduce the discrepancies between simulation and the real world in order to produce more robust policies that learn to generalize to the domain and dynamics of the real world without physically training in it. 

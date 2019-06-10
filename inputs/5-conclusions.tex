@@ -1,0 +1,26 @@
+\chapter{Conclusions}
+\label{conclusions}
+
+\section{Summary}
+
+The proposed method in this thesis is built on the basis of the \vae{} and its conditionally modified variant \cvae{}. The \cvae{} was used to learn latent representations that can be used to improve Sim-To-Real transfer by more accurately modelling reality in a data-efficient way. We incorporated the various techniques to avoid latent variable collapse, which is a common problem with naïve \cvae{} formulations. A baseline \cvae{} was trained ''from scratch'' on real data and required at least three times as many samples to be on par with \dettostoc{}. We observed that for simple scenarios, the number of required iterations of \dettostoc{} is small and improvement  was negligible after 4 iterations.
+
+The \dettostoc{} algorithm was tested on two MuJoCo scenarios. The first scenario simulated passive dynamics and the second one included a robot interacting with the environment with control actions. In both scenarios, the \dettostoc{} substantially outperformed the baseline in learning to predict the next state $\vns$ given $\vs$. Furthermore, by inspecting the latent space distribution we can conclude that \dettostoc{} can learn a posterior that results in higher log likelihood of the \emph{real} data. On average, training a \cvae{} from scratch required two times as much data to achieve a similar log likelihood over the real data. It is also clear that this performance also scales with the complexity of the environment; the more complex scenario, the better \dettostoc{} performs when compared to the baseline.
+
+We showed that the \dettostoc{} algorithm can be used as a data-efficient way to represent probability dynamics of robots and their environments. From the empirical results, it is clear that \dettostoc{} can be used to improve performance of a stochastic simulator.
+
+The code for \dettostoc{}, as well as both MuJoCo environments can be found at \url{https://github.com/hwaxxer/det2stoc}. 
+
+%\section{Discussion}
+
+\subsection{Future work}
+We would like to extend our framework to real-world data with physical robots in future work. Furthermore, we wish to incorporate higher-dimensional sensor modalities such as vision for both state observations and parameters of simulation randomization.
+Another interesting direction would be to explore using a higher latent space dimension than the dimension of parameters. This would allow for capturing latent information that is not directly tied to the parameters we chose to learn and could yield even better performance.
+
+For the experiments, we assume that the \textit{real} parameters fall within the interval of a prior estimation. Future research should look into whether \dettostoc{} can indicate that the prior is outside the interval, and how well it handles even more uninformed priors.
+
+Some work was done trying out a mixture of distributions as prior \parencite{DBLP:journals/corr/DilokthanakulMG16} but we found this approach ineffective in our experiments.
+
+We used a \cvae{} as a generative model. However, \dettostoc{} could be used with other generative models, such as Generative Adversarial Networks \parencite{goodfellow2014} with some modifications.
+
+The \dettostoc{} algorithm that has been outlined in this thesis does not enforce constraints on the output. This means that no measures have been taken to ensure that the properties of the predicted output are valid. For example, if the output is a rotation matrix, it is not guaranteed to be orthogonal. This is not a limitation of the proposed \dettostoc{} algorithm, but rather a general problem when training neural networks. This does not have any significant impact for the uses described in this thesis, but should be considered if the output is used in other systems that require physical constraints. Various constrained optimization techniques can be taken to avoid this problem and would be an interesting direction to explore. %For example, a rotation matrix $M$ needs to be orthogonal. If we let let $M=U \Sigma V$ be the singular value decomposition of $M$, then $R=UV$.
