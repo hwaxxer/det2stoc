@@ -1,0 +1,166 @@
+\documentclass{kththesis}
+
+\usepackage{csquotes} % Recommended by biblatex
+\usepackage[style=numeric,sorting=none,backend=biber]{biblatex}
+\addbibresource{references.bib} % The file containing our references, in BibTeX format
+%\usepackage[T1]{fontenc} needed for black boxes in bibliography?
+
+
+\usepackage{amsmath,amsthm, amssymb}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{wrapfig}
+\usepackage{amsfonts}
+\usepackage{booktabs}
+% \usepackage{float}
+\usepackage{subcaption}
+\usepackage{rotating}
+\usepackage{overpic}
+\usepackage[outercaption]{sidecap}  
+
+
+\usepackage{nameref}
+% For \ang
+\usepackage{siunitx}
+
+\usepackage[font={small}]{caption} % To make image captions smaller
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{mathtools}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,bayesnet,backgrounds,calc,decorations.pathreplacing}
+\usepackage{enumitem}  % for tighter list spacing
+\usepackage{hyperref} % for URLs
+
+
+\captionsetup{labelfont=bf}
+
+% Smaller bullets in lists.
+\newlength{\mylen}
+
+%======================================================
+\newcommand{\vz}{\boldsymbol{z}}
+\newcommand{\vx}{\boldsymbol{x}}
+\newcommand{\vy}{\boldsymbol{y}}
+\newcommand{\vth}{\boldsymbol{\theta}}
+\newcommand{\vph}{\boldsymbol{\phi}}
+\newcommand{\vpsi}{\vec{\psi}}
+
+\DeclareMathOperator{\E}{\mathbb{E}}
+\renewcommand{\vec}[1]{\boldsymbol{#1}}
+
+\makeatletter
+\newcommand{\@givennoparenthesis}[2]{\ensuremath{{{#1}\;\middle|\;{#2}}}}
+\newcommand{\givennop}{\@givennoparenthesis}
+\newcommand{\@giventhatstar}[2]{\ensuremath{\left({#1}\;\middle|\;{#2}\right)}}
+\newcommand{\@giventhatnostar}[3][]{#1(#2\,#1|\,#3#1)} 
+\newcommand{\given}{\@ifstar\@giventhatstar\@giventhatnostar}
+\makeatother
+ 
+\DeclarePairedDelimiterX{\infdivx}[2]{\big(}{\big)}{%
+  #1\;\delimsize\|\;#2%
+}
+\newcommand{\KL}{\mathcal{KL}\infdivx}
+\newcommand{\N}{\mathcal{N}}
+
+\newcommand{\vae}{\textsc{vae}}
+\newcommand{\cvae}{\textsc{cvae}}
+\newcommand{\dettostoc}{\textsc{det2stoc}}
+
+\newcommand{\vs}{\pmb{s}_t}
+\newcommand{\va}{\pmb{a}_t}
+\newcommand{\vns}{\pmb{s}_{t+1}}
+
+\newcommand{\fsimulator}{\ensuremath{f^{sim}}}
+\newcommand{\fpsisimulator}{\ensuremath{f^{sim}_{\psi}}}
+\newcommand{\fdecoder}{\ensuremath{f^{decoder}}}
+\newcommand{\fencoder}{\ensuremath{f^{encoder}}}
+% \newcommand{\fdecoder}{\ensuremath{f_{\phi_{decoder}}}}
+
+\newcommand{\ra}[1]{\renewcommand{\arraystretch}{#1}}
+
+\newcommand{\pfriction}{\psi_{\textsc{friction}}}
+\newcommand{\pcom}{\psi_{\textsc{com}}}
+\newcommand{\pwind}{\psi_{\textsc{wind}}}
+
+\newcommand{\ptheta}{p_{\theta}}
+\newcommand{\qphi}{q_{\phi}}
+
+\newcommand{\trajsim}{\vec{\xi}^{sim}}
+\newcommand{\trajreal}{\vec{\xi}^{real}}
+\newcommand{\trajrealtest}{\vec{\tau}^{real}}
+
+\newcommand{\ws}{Windy Slope}
+\newcommand{\yp}{YuMi Pusher}
+
+% Used when drawing neural nets
+\def\nodesize{30pt}
+\def\smallnodesize{20pt}
+\def\nodesep{12pt}
+\def\smallnodesep{6pt}
+\def\layersep{16pt}
+\definecolor{rose}{HTML}{ffa9b5}
+\definecolor{curry}{HTML}{f6c800}
+\definecolor{moss}{HTML}{757b33}
+
+%======================================================
+
+\title{det2stoc -- Converting Deterministic Simulators to Realistic Stochastic Models via Data Alignment}
+\alttitle{det2stoc -- Konvertera Deterministiska Simulatorer till Realistiska Stokastiska Modeller via Datajustering}
+\author{Martin Hwasser}
+\email{hwasser@kth.se}
+\supervisor{Rika Antonova}
+\examiner{Danica Kragic}
+\programme{Master in Computer Science}
+\school{School of Electrical Engineering and Computer Science}
+\date{\today}
+
+\kthcover{cover.pdf}
+
+\begin{document}
+\frontmatter
+\titlepage
+% ======================================================
+% ABSTRACT
+% ======================================================
+\begin{abstract}
+Simulation is commonly used to train agents in Reinforcement Learning since they provide an abundance of data that in many cases can be generated faster than real-time. However, the behaviors learned by the agent are often specific to attributes of the simulator and may not perform well when transferred to the real world. This thesis describes an algorithm that can be used to minimize the discrepancy between simulation and reality. Using this algorithm, it is possible to both identify parameters of the simulator that results in more accurate simulation of reality, and learn a generative model that can produce output that is close to real-world dynamics.
+
+%We first show that the components of this algorithm are well-suited to solve an example analytic problem.
+We first show how this algorithm works on a problem that can be solved analytically. We then demonstrate that the algorithm successfully handles more elaborate environments with physics simulation involving contact between objects and control actions.
+
+%And finally, we show that the algorithm can be used to facilitate training an agent in simulation and transferring the learned policy to a real robot.
+\end{abstract}
+\begin{otherlanguage}{swedish}
+  \begin{abstract}
+    Simulering används vanligtvis för att träna agenter inom Reinforcement Learning eftersom de erbjuder stora mängder data som i många fall kan genereras fortare än realtid. Dock är de beteenden som agenten lär sig ofta specifika för simulatorns attributer och kommer inte nödvändigtvis att prestera väl när de överförs till verkligheten. Detta arbete beskriver en algoritm som kan användas för att minimera skillnaderna mellan simulering och verklighet. Med denna algoritm är det möjligt att både identifiera de simulatorparametrar som resulterar i bättre simulering av verkligheten, och att lära en generativ modell att producera data som liknar verklig dynamik.
+    
+    Vi visar först att komponenterna som används i algoritmen är väl anpassade för att lösa ett analytiskt exempelproblem. Vi demonstrerar sedan att algoritmen med framgång hanterar mer sofistikerade miljöer med fysiksimulering som involverar kontakt mellan object samt styrsignaler.
+  \end{abstract}
+\end{otherlanguage}
+
+\section*{Acknowledgements}
+
+This thesis would not have been possible without my supervisor Rika Antonova, whose expertise paved the way for the methodology in this work. Ever the inspiring mentor; demanding more when I made progress and being patient when I struggled, whether in regard to the thesis or hardships in my personal life. Always available for a discussion, and unfailingly replying within an instant to emails in the middle of the night. Thank you.
+
+% ======================================================
+\tableofcontents
+% ======================================================
+\mainmatter
+% ======================================================
+
+\input{inputs/1-introduction}
+\input{inputs/2-background}
+\input{inputs/3-method}
+\input{inputs/4-experiments}
+\input{inputs/5-conclusions}
+
+%======================================================
+\printbibliography[heading=bibintoc]
+
+\appendix
+%======================================================
+\input{inputs/6-appendix}
+%======================================================
+\tailmatter
+%======================================================
+
+\end{document}

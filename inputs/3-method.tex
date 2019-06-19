@@ -1,0 +1,177 @@
+\chapter{Methods}
+\label{methods}
+
+This chapter describes the motivation behind the proposed \dettostoc{} algorithm, and outlines the algorithm and the network architecture in detail.
+
+\section{Motivation}
+
+%Combining deep learning with physics-based modeling has several positive benefits.  
+
+Consider a physics simulator that correctly describes a dynamical system using laws of physics and mathematics. Since neural networks learn from experience, it is possible to learn the dynamics of this system and make accurate predictions given enough input and output samples. According to the universal approximation theorem, a neural network with at least one hidden layer with a nonlinear activation function can approximate any smooth function with sufficient accuracy provided that there are enough hidden units in the layer \parencite{Hornik1989} \parencite{Cybenko1989}.
+
+%These networks are thus universal approximators, in their mapping of input vectors to output vectors, which is what makes them so useful for tasks in artificial intelligence. On the other hand, the sufficient number of hidden units of [26] is not guaranteed to be manageable computationally [27]. As is pointed out by Lin et al. in [27], the reason that a lot of neural network function approximations however indeed seem to work for a variety of tasks [25] is that the class of functions we are actually interested in is tiny, and essentially of low dimensionality, compared to the total collection of estimable functions.
+
+General-purpose simulators employ efficient dynamics models to make approximations but do not explicitly model uncertainty. Simulation is fast, however, in complex scenarios it is still time consuming to compute frictional contacts. In contrast, a forward pass in a neural network is fast, and a hybrid solution that combines deterministic simulators with learnable, stochastic neural networks allows for models that are efficient, expressive and generalizable.
+
+%information from observed data, for example when there are unknown variables or parameters that cannot be measured, but we have observed data on how the system behaves.
+
+The idea of this work is to train a \cvae{} using real data to produce a stochastic simulator, but as mentioned previously, this is not data-efficient. So, instead of starting from random encoder and decoder weights, we will first align the decoder function $\fdecoder{}$ with the output of an existing general-purpose simulator $\fsimulator{}$.
+
+Furthermore, real data comes with uncertainty. This uncertainty can be modelled with a generative model such as a \vae{}, and the slightly modified \cvae{} allows us to condition on current state. Moreover, we can use our prior knowledge in a Bayesian manner to reason about sensible values that affect the environment.
+
+Domain and dynamics randomization are powerful techniques to reduce the reality gap. However, as shown with experiments in \parencite{Chebotar2018}, using wide distribution for randomization can cause infeasible solutions that hinder policy learning, or sub-optimal and conservative policies. Instead of adding noise to observations, we introduce noise during simulation by collecting a set of trajectories using a range of simulation parameters $\psi$. 
+
+%Prior knowledge (parameters to affect environment) pre training
+
+\section{Proposed \dettostoc{} algorithm}
+\label{det2stoc:algorithm}
+
+Our approach specifies how existing general-purpose simulators could be used to make the learning of the stochastic function $g(\cdot)$ more data efficient. We denote real observations $\trajreal$ and simulated observations parameterized by $\vpsi$ $\trajsim_{\vpsi}$. Algorithm \ref{alg:det2stoc} describes \dettostoc{} procedure.
+
+\vspace{\baselineskip}% Insert a blank line
+\begin{algorithm}[H]
+%  \LinesNumberedHidden
+  \DontPrintSemicolon
+  $\trajreal \leftarrow$ collect real trajectories \; \label{det2stoc:step1}
+  $\vpsi_0 \leftarrow$ initialize sim parameters \;
+  \For{i $\in \{0, ..., N\}$}{
+    $\trajsim_{\vpsi_i} \leftarrow$ collect sim trajectories from $\fsimulator{}(\vpsi_{i})$ \;
+    %$\fdecoder{} \xleftarrow{}$ PreTrain($\trajsim$, $\vpsi_i$) \;
+    $\ptheta \leftarrow$ train \fdecoder{} on $\trajsim_{\vpsi_i}$\;% \ptheta \given{\vns}{\vpsi_i, \vs, \va}$ \;
+    %$f^{\cvae{}} \xleftarrow{}$ Train($\trajreal, \fdecoder{}$) with \fdecoder{} frozen\;
+    $\qphi \leftarrow$ train \cvae{} on $\trajreal$ using frozen $\fdecoder{}$\;
+    $\vph_{\mu, \sigma} \leftarrow$ compute posterior $\qphi$ given $\trajreal$\;% $\qphi \given{\vz}{\vs, \va, \vns} $\;%($\trajreal, f^{\cvae{}}$) \;
+    $\vpsi_{i+1} \xleftarrow[]{} \vph_{\mu, \sigma}$ \;
+    %update parameter distribution from posterior given $\trajreal$ \;
+  } % end for N robot trials
+  \caption{det2stoc}
+  \label{alg:det2stoc}
+\end{algorithm}
+\vspace{\baselineskip}% Insert a blank line
+First, we collect trajectories $\trajreal$ from our real environment.
+We then choose a set of initial parameters that cannot be measured or that have uncertainty associated with them. We decide on an initial distribution $\vpsi_0$ for these parameters, typically an uninformative distribution, for example a uniform distribution or a wide truncated normal distribution.
+In the beginning of each iteration $i$, we run simulations parameterized by samples from $\vpsi_i$ and collect trajectories $\trajsim_{\vpsi_i}=\{\vs, \va, \vns\}^{1:N}$. The decoder network $\fdecoder{}$ is pre-trained separately on the simulated data $\trajsim_{\vec{\psi_i}}{}$ to match $\fsimulator(\vpsi_i)$ using a negative log likelihood loss function. However, during this pre-training phase, instead of sampling $\vz$ from the posterior $\qphi$, the network is fed parameters $\vpsi$ used during simulation. The intention of this step is to train the decoder to capture how the simulation parameters $\vpsi$ affect the system dynamics. % which will infer parameters $\vpsi_{\mu,\sigma}$ that closely ressemble those of real-world dynamics.
+The \cvae{} is subsequently trained on $\trajreal$, but the decoder weights are kept frozen. The purpose of this step is to train the encoder to produce a posterior that maximizes the log likelihood of the next state $\vns$, while ensuring that the decoder does not catastrophically forget what it learned during pretraining. The input to the encoder is state $\vs$, action $\va$ and next state $\vns$. %Including the next state ensures that there is enough information for the network to infer what parameter corresponds to which output.
+Finally, we update our parameters $\vpsi_{i+1}$ with the posterior $\vph_{\mu, \sigma}$.
+
+This process can be repeated multiple times. The result of the \dettostoc{} algorithm is the trained decoder as well as the learned simulation parameters $\vph_{\mu, \sigma}$. Because of how the training procedure was set up, the network is now aligned with real world data.
+
+%Since the \cvae{} includes the target $\vy$ in the posterior formulation, and we have trained the \cvae{} in a way that it is encouraged to represent the simulator parameters in latent space, we can perform system identification using variational inference and sampling from the posterior $q_{\vth} \given{\vz}{\vx,\vy}$. The idea is that if the \cvae{} has been trained on sufficiently many samples, it should be able to produce a posterior that in fact matches the parameter value that best predict the next state $\vns$.
+
+\begin{figure}
+\centering
+\begin{tikzpicture}[shorten >=0pt,-,draw=black!50, node distance=\nodesep and \layersep, myarrow/.style={-Stealth}]
+    \tikzstyle{every pin edge}=[<-,shorten <=0pt]
+    \tikzstyle{neuron}=[circle,draw=black,fill=white!50,minimum size=30pt,inner sep=0pt]
+    \tikzstyle{probabilistic neuron}=[neuron,minimum size=\smallnodesize,node distance=\smallnodesep and \layersep]
+    \tikzstyle{input neuron}=[neuron];
+    \tikzstyle{output neuron}=[probabilistic neuron];
+    \tikzstyle{hidden neuron}=[neuron];
+    \tikzstyle{annot}=[text centered, node distance=0.8cm];
+    \tikzstyle{myarrow dasharrow}=[myarrow dashed];
+    \scriptsize
+    % Draw the nodes
+    \node[input neuron] (I-1) at (0,0) {$x_1$};
+    \node[input neuron, below=of I-1] (I-2) {$x_2$};
+    \node[input neuron, below=of I-2] (I-3) {$y_1$};
+    \node[input neuron, below=of I-3] (I-4) {$y_2$};
+        
+    \node[hidden neuron, right=of I-1, yshift=-0.5*(\nodesep+\nodesize)] (he-1) {$h^{(e)}_1$};
+    \node[hidden neuron, below=of he-1] (he-2) {$h^{(e)}_2$};
+    \node[hidden neuron, below=of he-2] (he-3) {$h^{(e)}_3$};
+        
+    \node[probabilistic neuron, right=of he-2, yshift=0.5*(\smallnodesize+\smallnodesep)] (mu) {$\mu$};
+    \node[probabilistic neuron, below=of mu] (sigma) {$\sigma$};
+        
+    %\foreach \name / \y in {1,...,2}
+    \node[hidden neuron, right=of mu, yshift=0.5*(\smallnodesize-\smallnodesep)] (z-1) {$z$};
+    
+    \node[hidden neuron, above=of z-1] (psi-1) {$\psi$};
+
+    \node[input neuron, below=of z-1] (c-1) {$x_1$};
+    \node[input neuron, below=of c-1] (c-2) {$x_2$};
+
+    \foreach \name in {1,...,3}
+        \node[hidden neuron, right=of he-\name, xshift=2*\layersep + \nodesize+\smallnodesize] (hd-\name) {$h^{(d)}_\name$};
+
+    \node[probabilistic neuron, right=of hd-2, yshift=1.5*(\smallnodesize+\smallnodesep] (O-1) {$\mu_1$};
+    \node[probabilistic neuron, below=of O-1] (O-2) {$\mu_2$};
+    \node[probabilistic neuron, below=of O-2] (O-3) {$\sigma_1$};
+    \node[probabilistic neuron, below=of O-3] (O-4) {$\sigma_2$};
+
+    \node[input neuron, right=of hd-1, xshift=\layersep+\smallnodesize, yshift=-0.5*(\nodesize+\nodesep)] (Y-1) {$\hat{y}_1$};
+    \node[input neuron, below=of Y-1] (Y-2) {$\hat{y}_2$};
+
+    % Connect every node
+    \foreach \source in {1,...,4}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (I-\source) -- node[sloped] {} (he-\dest);
+            
+    \foreach \source in {1,...,3}
+        \foreach \dest in {mu, sigma}
+            \draw [myarrow] (he-\source) -- node[sloped] {} (\dest);
+
+    \foreach \source in {mu, sigma}
+            \draw [myarrow,dashed] (\source) -- node[sloped] {} (z-1);
+
+    \foreach \source in {1,...,1}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (z-\source) -- node[sloped] {} (hd-\dest);
+
+    \foreach \source in {1,...,3}
+        \foreach \dest in {1,...,4}
+            \draw [myarrow] (hd-\source) -- node[sloped] {} (O-\dest);
+
+    \foreach \source in {1,...,2}
+        \foreach \dest in {1,...,3}
+            \draw [myarrow] (c-\source) -- node[sloped] {} (hd-\dest);
+            
+    \foreach \source in {1,3}
+        \draw [myarrow,dashed] (O-\source) -- node[sloped] {} (Y-1);
+           
+    \foreach \source in {2,4}
+        \draw [myarrow,dashed] (O-\source) -- node[sloped] {} (Y-2); 
+            
+    \draw [myarrow] (psi-1) -- node[sloped] {} (z-1);
+
+    % Annotate the layers
+    \node[annot, below right=of he-3, yshift=0.6cm] (encoder) {Encoder};% $q\given{z}{x}$};
+    \node[annot, below right=of hd-3, yshift=0.6cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
+    
+    \begin{scope}[on background layer]
+        %\path[use as bounding box] (0,0) rectangle (10,10);
+        \draw[rounded corners=3pt,fill=curry!50]
+            ($(he-1.north west)+(-0.5,0.4)$) rectangle ($(sigma.south east)+(0.4,-1.6)$);
+        \draw[rounded corners=3pt,fill=moss!50]
+            ($(hd-1.north west)+(-0.5,0.4)$) rectangle ($(O-4.south east)+(0.4,-0.7)$);
+        \draw[rounded corners=3pt,draw=rose!100,ultra thick,dotted]
+            ($(psi-1.north west)+(-0.3,0.4)$) rectangle ($(O-4.south east)+(2,-1.4)$);
+            
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(O-1.north west)+(-0.4,0.4)$) rectangle ($(O-2.south east)+(0.4,-0.4)$);
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(O-3.north west)+(-0.4,0.4)$) rectangle ($(O-4.south east)+(0.4,-0.4)$);
+            
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(mu.north west)+(-0.4,0.4)$) rectangle ($(mu.south east)+(0.4,-0.4)$);
+        % \draw[rounded corners=3pt,draw=black!100, thick]
+        %     ($(sigma.north west)+(-0.4,0.4)$) rectangle ($(sigma.south east)+(0.4,-0.4)$);
+    \end{scope}
+    
+    %\node[annot, above=of decoderbox] {okokok};
+\end{tikzpicture}
+\caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D target vector $\vec{y}$. Dashed arrows denote sampling from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior. In this phase, the decoder is trained on $\trajsim_{\vpsi}$.}
+\label{fig:det2stoc_architecture}
+\end{figure}
+
+\section{Conditioning architecture and transfer-aware training}
+
+%\subsection{Network and training parameters}
+Both the encoder and decoder networks are fully connected MLPs with 3 layers of 64 hidden units using ReLU activations and layer normalization \parencite{Ba2016}. The number of latent variables is equal to the number of variable parameters used when collecting the training data from simulation. The output of both networks are multivariate normal distributions with diagonal covariance matrices.
+
+A common problem during training of a \vae{} is latent variable collapse. When this phenomenon occurs, the \vae{} learns a good generative model of the data but does not learn good representations of the individual data points. Specifically, when maximizing the lower bound of the log marginal likelihood, the posterior ''collapses'' at inference, when the posterior is set equal to the prior, essentially when the posterior is independent of the data. We combat this problem with skip-connections from the posterior to the decoder, essentially enforcing a stronger connection between the latent variables and the likelihood function \parencite{Dieng2018}.
+
+Since the \cvae{} has the target $\vy$ in its posterior formulation, it is prone to overfitting unlike a regular \vae{} which tends to be regularized by the KL divergence term in the ELBO. The authors of \parencite{Sohn2015} suggest adding dropout to the encoder to combat this problem. A dropout rate of $0.2$ is used on the input layer to the encoder and helped avoiding extremely peaked latent space distributions.
+
+A learning rate with cosine decay is used to minimize the loss function using Adam \parencite{kingma2014adam}. We also employed early stopping for during pre-training of the decoder 
+to avoid overfitting. This becomes especially important since the decoder and $\cvae{}$ are trained on two different datasets.
