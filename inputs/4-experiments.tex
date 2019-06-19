@@ -1,19 +1,26 @@
 \chapter{Experiments and Results}
 \label{experiments}
 
-This chapter introduces in greater detail the data and results for the thesis project. We perform three experiments. The first is an analytic experiment, constructed as a proof of concept to confirm the basic premise that the \cvae{} can be used to predict conditional probabilities. In the following experiments we evaluate the \dettostoc{} algorithm in two different scenarios using MuJoCo.
+This chapter introduces in greater detail the data and results for the thesis project. We perform three experiments. The first is an analytic experiment, constructed as a proof of concept to confirm the basic premise that the \cvae{} can be used to predict conditional distributions. In the following experiments we evaluate the \dettostoc{} algorithm in two different scenarios using a physics engine.
 
 Some questions we want to answer: How does \dettostoc{} compare against a baseline model? How many iterations of \dettostoc{} are required for \fdecoder{} to match \fsimulator{} with sufficient accuracy?
 
 \section{Evaluation}
-Evaluating the performance of a generative model is not straightforward. We therefore choose to present the results in several ways. The most important metric is the log likelihood of the test set $\trajreal_{test}$. This yields a number indicating the goodness of fit, but a scalar is not very helpful in order to understand the quality of the predictions without comparison. We consequently contrast it with a baseline model. We also visually display results whenever possible to further demonstrate how the models perform.
+Evaluating the performance of a generative model is not straightforward. We therefore choose to present the results in several ways. The generative model learns a multivariate normal distribution with means $\vec{\mu}$ and a diagonal covariance matrix $\vec{\Sigma} = \vec{\sigma^2}\times\vec{I}$. The most important metric is the log likelihood of the test set $\trajrealtest$
+
+\begin{equation}
+    \log \mathcal{L} = -\frac{N}{2} \log \vert \vec{\Sigma} \vert - 
+    \frac{1}{2} \sum^N_{i=1} (\vx_i - \vec{\mu})^T \vec{\Sigma} (\vx_i - \vec{\mu}) 
+\end{equation}
+
+This yields a number indicating the goodness of fit, but a scalar is not very helpful in order to understand the quality of the predictions without comparison. We consequently contrast it with a baseline model. We also visually display results whenever possible to further demonstrate how the models perform.
 
 \subsection{Baseline model}
 We compare the results of \dettostoc{} against a \emph{baseline} \cvae{} with the same number of layers and hidden units. Given infinite data, the baseline model should provide good generative results. The baseline \cvae{} is trained strictly on \emph{real} data which is limited, and serves as an indication of the predictive performance without alignment with simulation data.
 
 \section{Analytic experiment}
 \label{exp:analytic}
-As an initial experiment we use data with known distributions that can easily be analyzed. We define a joint distribution $p(s,a,s')$ and then attempt to learn the conditional distribution $p\given{s'}{s,a}$. If the distribution is a multivariate Gaussian, then the conditional distribution is also Gaussian and we can find analytic expressions for its mean and covariance \parencite{bishop:2006:PRML}. In the general case, if $\vx$ is a multivariate Gaussian variable of dimension $l+m$, we can partition $\vec{Z}$ into two multivariate variables $\vx_a$ and $\vx_b$
+As an initial experiment we use data with known distributions that can easily be analyzed. We define a joint distribution $p(s,s',\psi)$ and then attempt to learn the conditional distribution $p\given{s'}{s,\psi}$. If the distribution is a multivariate Gaussian, then the conditional distribution is also Gaussian and we can find analytic expressions for its mean and covariance \parencite{bishop:2006:PRML}. In the general case, if $\vx$ is a multivariate Gaussian variable of dimension $l+m$, we can partition $\vec{Z}$ into two multivariate variables $\vx_a$ and $\vx_b$
 
 \begin{equation}
 \vec{\vx} = 
@@ -28,7 +35,7 @@ l \\
 m
 \end{bmatrix}
 \end{equation}
-We then find their mean and covariance
+We find the mean and covariance by
 \begin{equation}
 \mu_{\vx} = 
 \begin{bmatrix}
@@ -79,7 +86,7 @@ The question is now is to see if it is possible to learn $\vec{\mu}_{\given*{a}{
 
 %\subsection{Training procedure}
 
-To setup this experiment, we randomly generate the parameters of a trivariate normal distribution and ensure the covariance matrix is positive semi-definite. The \cvae{} is trained with samples from the trivariate distribution in the following way:
+To setup this experiment, we randomly generate the parameters of a trivariate Gaussian distribution and ensure the covariance matrix is positive semi-definite. The \cvae{} is trained with samples from the trivariate distribution in the following way:
 
 First, we sample $(s, a, s')$ from the trivariate distribution. Then, the probabilistic encoder is used to produce $\qphi \given{z}{s', s, a}$. We then modulate the posterior $z$ with the conditional inputs $s, a$ and use the decoder to predict the distribution $\ptheta \given{s'}{z, s, a}$. We can view this as analogous to the goal of learning the next state $s'$ conditioned on the current state $s$ and control actions $a$.
 
@@ -88,22 +95,22 @@ First, we sample $(s, a, s')$ from the trivariate distribution. Then, the probab
 \captionsetup{size=footnotesize}
 \begin{subfigure}{\linewidth}
   \centering
-  \includegraphics[width=1.0\linewidth]{img/trivariate/trivariate_step0}
+  \includegraphics[width=0.9\linewidth]{img/trivariate/trivariate_step0}
   \caption{0 gradient steps}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
   \centering
-  \includegraphics[width=1.0\linewidth]{img/trivariate/trivariate_step100}
+  \includegraphics[width=0.9\linewidth]{img/trivariate/trivariate_step100}
   \caption{100 gradient steps}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
   \centering
-  \includegraphics[width=1.0\linewidth]{img/trivariate/trivariate_step500}
+  \includegraphics[width=0.9\linewidth]{img/trivariate/trivariate_step500}
   \caption{500 gradient steps}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
   \centering
-  \includegraphics[width=1.0\linewidth]{img/trivariate/trivariate_step2000}
+  \includegraphics[width=0.9\linewidth]{img/trivariate/trivariate_step2000}
   \caption{2000 gradient steps}
 \end{subfigure}
 
@@ -165,7 +172,7 @@ $\pwind$ & \texttt{mjOption.wind} \\
 
 A first scenario was constructed using MuJoCo in order to see if the \dettostoc{} algorithm can predict the next state given the current state while only simulating passive dynamics.
 
-In this scenario, which can be seen in Figure \ref{fig:windyslope_real}, an object is placed on a sloping surface. To make the scenario more challenging and to emulate a situation where a parameter cannot be measured, another object is placed inside the box at an unknown position, thus altering the center of mass of the box as seen in Figure \ref{fig:inside_box}. Furthermore, a fixed cylindrical obstacle placed in the middle of the surface, since accurately modelling contact is difficult and should make predicting the output slightly harder. 
+In this scenario, which can be seen in Figure \ref{fig:windyslope_real}, an object is placed on a sloping surface. To make the scenario more challenging and to emulate a situation where a parameter cannot be measured, another object is placed inside the box at an unknown position, as seen in Figure \ref{fig:inside_box}. Thus, the center of mass of the box is altered as the inner object slightly moves. Furthermore, a fixed cylindrical obstacle placed in the middle of the surface, since accurately modelling contact is difficult and should make predicting the output somewhat harder. 
 
 \begin{figure}
 \centering
@@ -175,7 +182,7 @@ In this scenario, which can be seen in Figure \ref{fig:windyslope_real}, an obje
     \label{fig:inside_box}
 \end{figure}
 
-How the box moves on the surface depends on the following variables: the tangential friction coefficients between the surface and the box, $\pfriction$, its center of mass, $\pcom$, as well as viscous, lift and drag forces caused by wind, $\pwind$. How these parameters each affect the environment is illustrated in Figure \ref{fig:windyslope_psi}. The goal is to predict the next state $\vns$ given current state $\vs$, with no knowledge of the \textit{real} variables for friction and wind. The state is an 18D vector consisting of the current position, orientation, linear and angular velocity of the object.
+How the box moves on the surface depends on the following variables: the tangential friction coefficients between the surface and the box, $\pfriction$, its center of mass, $\pcom$, as well as viscous, lift and drag forces caused by wind, $\pwind$. How these parameters each affect the environment is illustrated in Figure \ref{fig:windyslope_psi}. The goal is to predict the next state $\vns$ given current state $\vs$, with no knowledge of the \textit{real} variables for friction, wind and the position of the inner object. The state is an 18D vector consisting of the current position, orientation, linear and angular velocity of the object.
 
 Following the \dettostoc{} algorithm outlined in \ref{det2stoc:algorithm}, we define initial distributions in parameter space $\vec{\psi}$ as wide truncated Gaussians. For this experiment, these initial estimates are purposely made uninformative as a proof of principle. For example, the prior distribution for $\pwind$ implies we do not know which way the wind is blowing. In reality however, the estimates can be based on observing the dynamics in the real world and trying to replicate the same behavior in the simulator.
 
@@ -233,14 +240,14 @@ Following the \dettostoc{} algorithm outlined in \ref{det2stoc:algorithm}, we de
     \label{fig:traj_fake_all}
 \end{subfigure}
 \end{subfigure}
-\caption{Similar to Figure \ref{fig:windyslope_real}, this figure shows snapshots of the environment with various configuration parameters $\vpsi$ to illustrate how each parameter affects the dynamics of the environment. (\subref{fig:traj_friction}) shows the impact of varying friction while keeping the other variables fixed. Similarly, (\subref{fig:traj_wind}) shows the effect of varying wind. (\subref{fig:traj_inner_box}) shows three boxes each with the inner box placed in different locations altering the center of mass. In (\subref{fig:traj_fake_all}), all three parameters are sampled from the initial estimate $\vpsi_0$.}
+\caption{Similar to Figure \ref{fig:windyslope_real}, this figure shows snapshots of the environment with various configuration parameters $\vpsi$ to illustrate how each parameter affects the dynamics of the environment. (\subref{fig:traj_friction}) shows the impact of varying friction while keeping the other variables fixed. Similarly, (\subref{fig:traj_wind}) shows the effect of only varying wind. (\subref{fig:traj_inner_box}) shows three boxes each with the inner box placed in different locations altering the center of mass. In (\subref{fig:traj_fake_all}), all three parameters are sampled from the initial estimate $\vpsi_0$.}
 \label{fig:windyslope_psi}
 \end{figure}
 
 
 The position and velocity of the object are recorded every 40ms during four seconds, corresponding to 100 timesteps. Each time the environment is reset, new parameters are sampled from $\vpsi$.
 
-We vary all three parameters: \textit{friction, center of mass, wind}. How the environment changes with these parameters is illustrated in Figure \ref{fig:windyslope_psi}. We run three iterations of \dettostoc{} and evaluate the log likelihood of the test set $\trajreal$ after each iteration. The results are presented in Table \ref{table:windyslope_results}, and visual plots showing the latent space converging toward the \emph{real} parameters in Figure \ref{fig:windyslope_latent_space}.
+We vary all three parameters: $\pfriction{}, \pcom{}, \pwind{}$. How the environment changes with these parameters is illustrated in Figure \ref{fig:windyslope_psi}. We run multiple iterations of \dettostoc{} and evaluate the log likelihood of the test set $\trajreal$ after each iteration. For both models we use 1000 \emph{real} samples, or 10 trajectories, as a number that would be feasible to collect in the real world for most scenarios. The \dettostoc{} model is also, for each iteration, trained on 1M samples of simulated data parameterized by $\vpsi$ that we learned. The results are presented in Table \ref{table:windyslope_results}, and visual plots showing the latent space converging toward the \emph{real} parameters in Figure \ref{fig:windyslope_latent_space}.
 
 \begin{table}
 \ra{1.3}
@@ -249,28 +256,29 @@ We vary all three parameters: \textit{friction, center of mass, wind}. How the e
 \begin{tabular}{lrr}
 \multicolumn{3}{c}{\MakeLowercase{\textsc{\ws{} scenario}}} \\
 \toprule
-Model & \# Trajectories (samples) & Log likelihood  \\
+Model & \emph{Real} samples & Log likelihood  \\
 \midrule
 %\cvae{} (baseline) & 5 (500) & 22.09 \\
 
 % delta 10 68.30329 71.555916 70.52932 70.049164 66.66855 72.10237
-\cvae{} (baseline) & 10 (1000) & 69.42 $\pm$ 1.73\\
-
+\cvae{} (baseline) & 1000 & 69.42 $\pm$ 1.73\\
+% 80.63891 79.509514 80.901215
+\cvae{} (baseline) & 10000 & 80.35 $\pm$ 0.60\\
 % 20: 85.45479
 % 92.60568
 
-\dettostoc{} (1 iter) & 6 (1000) & 66.93 $\pm$ 0.54 \\
-\dettostoc{} (2 iter) & 8 (1000) & 78.65 $\pm$ 0.33 \\
+\dettostoc{} (1 iter) & 600 & 66.93 $\pm$ 0.54 \\
+\dettostoc{} (2 iter) & 800 & 78.65 $\pm$ 0.53 \\
 % 74.901566 74.901566 79.11099
 
 % 81.74333
-\dettostoc{} (3 iter) & 10 (1000) & \textbf{81.74 $\pm$ 0.41} \\
+\dettostoc{} (3 iter) & 1000 & \textbf{81.74 $\pm$ 0.61} \\
 
 \bottomrule
 \end{tabular}
 \bigskip
 
-\caption{Log likelihood results test set on the \ws{} scenario. Both the baseline model and \dettostoc{} has trained on a total of 1000 \emph{real} samples. The \dettostoc{} model is also, for each iteration, trained on 1M samples of simulated data parameterized by $\vpsi$ that we learned. We selected 1000 samples, or 10 trajectories, as a number that would be feasible to collect in the real world for most scenarios.}
+\caption{Log likelihood results of the test set $\trajrealtest{}$ on the \ws{} scenario. \dettostoc{} has only seen 1000 \emph{real} samples but still outperforms the baseline model that has trained on 10000 samples.}
 \label{table:windyslope_results}
 \end{table}
 
@@ -306,10 +314,10 @@ The astute reader may wonder why we start with a lower number of \emph{real} tra
 
 \subsection{Retrieving parameter predictions using latent space codes}
 
-As an experiment to see if \dettostoc{} can recover the \emph{real} parameters used by the simulator $\fsimulator_{\vth}$, we compute the expected mean and standard deviation of the posterior over the \emph{real} training set $\trajreal_{train}$. Since we have included the target $\vns$ in the posterior formulation, and pre-trained the decoder to match \fsimulator{}, samples from $\qphi \given{\vz}{\vs, \vns}$ should align with the true parameters $\vth$. The results can be seen in Table \ref{fig:windyslope_parameters_table} and visually in Figure \ref{fig:windyslope_latent_space}.
+As an experiment to see if \dettostoc{} can recover the \emph{real} parameters used by the simulator $\fsimulator_{\vth}$, we compute the expected mean and standard deviation of the posterior over the \emph{real} training set $\trajreal$. Since we have included the target $\vns$ in the posterior formulation, and pre-trained the decoder to match \fsimulator{}, samples from $\qphi \given{\vz}{\vs, \vns}$ should align with the true parameters $\vth$. The results can be seen in Table \ref{fig:windyslope_parameters_table} and visually in Figure \ref{fig:windyslope_latent_space}.
 %$\E_{\given{\vz}{\vs, \vns}}$
 
-\begin{table}
+\begin{table}[h!]
 \ra{1.3}
 \centering
 \begin{tabular}{lrrcrr}
@@ -324,11 +332,11 @@ As an experiment to see if \dettostoc{} can recover the \emph{real} parameters u
 % $\N$(-1, 1.0) 
 
 $\pfriction$ & 0.23 & 0.2308 && 0.01 & 0.0105 \\
-$\pcom$ & 0.11 & 0.1071 && 0.04 & 0.0383 \\
+$\pcom$ & 0.11 & 0.1071 && 0.04 & 0.0520 \\
 $\pwind$ & -1.7 & -1.7075 && 0.05 & 0.0546 \\
 \bottomrule
 \end{tabular}
-\caption{Latent representations of parameters $\vpsi$ in the windy slope scenario after running three iterations of \dettostoc{} starting from fairly uninformative priors for the parameters $\vpsi$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameter distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\trajreal_{train}$. The initial prior and posterior parameters after each iteration of \dettostoc{} can be found in Appendix \ref{appendix:a}.}
+\caption{Latent representations of parameters $\vpsi$ in the windy slope scenario after running three iterations of \dettostoc{} starting from fairly uninformative priors for the parameters $\vpsi$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameter distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\trajreal$. The initial prior and posterior parameters after each iteration of \dettostoc{} can be found in Appendix \ref{appendix:a}.}
 \label{fig:windyslope_parameters_table}
 \end{table}
 
@@ -337,15 +345,14 @@ $\pwind$ & -1.7 & -1.7075 && 0.05 & 0.0546 \\
 \captionsetup{size=footnotesize}
 \begin{subfigure}{\linewidth}
   \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/iter0_style_phi}
-  \caption{Initial estimates $\psi_0$}
+  \caption{Prior estimates}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
   \includegraphics[width=1.0\linewidth]{img/windyslope/latent-representation/iter4_10_style}
-  \caption{Posterior after 4 iterations of \dettostoc{}}
+  \caption{After 3 iterations of \dettostoc{}}
 \end{subfigure}
-\caption{Plots show the learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\vec{\xi}^{real}$ as normalized histograms after 4 iterations of \dettostoc{}.
-From left-to-right, the plots show tangential friction, center of mass and wind. %The prior parameters $\vpsi$ for each iteration of \dettostoc{} are included for clarity in a lighter color, along with the true distribution $\theta_{\mu, \sigma}$ in black dashes.}
-The \emph{real} distribution of the parameters $\theta_{\mu, \sigma}$ in drawn with black dashes. Plots from previous iterations can be found in Figure \ref{fig:windyslope_latent_space_full} in Appendix \ref{appendix:a}.}
+\caption{Plots show the learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\vec{\xi}^{real}$ as normalized histograms after 3 iterations of \dettostoc{}.
+From left-to-right, the plots show tangential friction, center of mass and wind. The \emph{real} distribution of the parameters $\theta_{\mu, \sigma}$ in drawn with black dashes. Plots from previous iterations can be found in Figure \ref{fig:windyslope_latent_space_full} in Appendix \ref{appendix:a}.}
 \label{fig:windyslope_latent_space}
 \end{figure}
 
@@ -361,6 +368,8 @@ At the start of each episode, the arms are initialized to a default pose and the
 The goal is now to predict the next state $\vns$ given both $\vs$ and $\va$. The state consists of the position and velocity of all 14 joints, the position and orientations of the end effectors, as well as the position, rotation and velocity of the box.
 
 The results can be found in Table \ref{table:yumi_results}. As the state vector is 60D we have chosen not to include the output distributions.
+
+It should be noted that \dettostoc{} vastly outperforms the baseline even though it does overestimates the variance of $\pfriction{}$. This can be explained by the fact that the learned policy pushes the box in increments, and small changes in friction do not cause noticeable effects in the movement of the box. The posterior for all iterations can be found in Appendix \ref{appendix:a}.%In fact, we verified that replacing the learned posterior \pfriction{} with the true value $\theta_{friction}$ and this  
 
 %The reward is a function of the distance: it is 0 outside a 0.14m radius of the goal, and otherwise monotonically increasing until the box is within 0.07m of the goal, which yields a reward of 1.
 
@@ -383,6 +392,32 @@ The results can be found in Table \ref{table:yumi_results}. As the state vector 
 \begin{table}
 \ra{1.3}
 \centering
+\begin{tabular}{lrr}
+\multicolumn{3}{c}{\textsc{\MakeLowercase{\yp{} scenario}}} \\
+\toprule
+%& \multicolumn{2}{c}{\small\emph{Real}} & \phantom{a} & \multicolumn{2}{c}{\emph{Sim}} \\
+%\cmidrule{2-3} \cmidrule{5-6}
+Model & \# \emph{Real} samples & Log likelihood of $\trajrealtest$ \\
+\midrule
+% 462.49237 463.926 488.15485 457.51343 481.58517 481.025
+\cvae{} (baseline) & $1000$ & $472.45 \pm 11.54$\\
+% 594.94806 615.2796 546.5111
+%\cvae{} (baseline) & $10000$ & $585.58 \pm 25.27$ \\
+% 648.6586 685.0386
+\cvae{} (baseline) & $100000$ & $653.85 \pm 8.91$ \\
+\dettostoc{} (1 iteration) & $600$ & $629.12 \pm 10.10$ \\
+\dettostoc{} (2 iterations) & $800$ & $716.43 \pm 11.37$\\
+\dettostoc{} (3 iterations) & $1000$ & \textbf{769.14 $\pm$ 12.32}\\
+
+\bottomrule
+\end{tabular}
+\caption{Log likelihood results of the test set $\trajrealtest{}$ on the \yp{} scenario. \dettostoc{} has only seen 1000 \emph{real} samples (corresponding to 10 trajectories) but still outperforms the baseline model that has trained on 100000 samples.}
+\label{table:yumi_results}
+\end{table}
+
+\begin{table}
+\ra{1.3}
+\centering
 \begin{tabular}{lrrcrr}
 \multicolumn{6}{c}{\textsc{\MakeLowercase{\yp{} scenario}}} \\
 \toprule
@@ -390,70 +425,35 @@ The results can be found in Table \ref{table:yumi_results}. As the state vector 
 %\cmidrule{2-3} \cmidrule{5-6}
 & $\theta_\mu^{(true)}$ & $\phi_\mu^{(learned)}$ && $\theta_\sigma^{(true)}$ & $\phi_\sigma^{(learned)}$ \\
 \midrule
-$\pfriction$ & $0.28$ & $0.3404$ && $0.01$ & $0.1093$ \\
-$\pcom$ & $0.035$ & $ 0.0367$ && $0.005$ & $0.0048$ \\
+$\pfriction$ & $0.28$ & $0.2889$ && $0.01$ & $0.0431$ \\
+$\pcom$ & $0.035$ & $ 0.0383$ && $0.005$ & $0.0056$ \\
 \bottomrule
 \end{tabular}
-\caption{Latent representations of parameters $\psi$ in the \yp{} scenario after running two iterations of \dettostoc{} starting from uninformed priors for the parameters $\vec{\psi}$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\vec{\xi}^{real}$. \todo[inline]{These numbers will be updated with better results}}
+\caption{Latent representations of parameters $\psi$ in the \yp{} scenario after running two iterations of \dettostoc{} starting from uninformed priors for the parameters $\vec{\psi}$. $\theta_\mu$ and $\theta_\sigma$ correspond to the mean and standard deviation of the \emph{real} parameters of the distribution, and $\phi_\mu$ and $\phi_\sigma$ correspond to the mean and standard deviation of samples from the posterior over the collected \emph{real} trajectories $\vec{\xi}^{real}$.}
 \label{table:yumi_parameters}
 \end{table}
-
-
-\begin{table}
-\ra{1.3}
-\centering
-\begin{tabular}{lrr}
-\multicolumn{3}{c}{\textsc{\MakeLowercase{\yp{} scenario}}} \\
-\toprule
-%& \multicolumn{2}{c}{\small\emph{Real}} & \phantom{a} & \multicolumn{2}{c}{\emph{Sim}} \\
-%\cmidrule{2-3} \cmidrule{5-6}
-Model & \# \emph{Real} trajectories (samples) & Log likelihood over $\trajreal_{test}$ \\
-\midrule
-\cvae{} (baseline) & 10 (1000) & 306.4443\\
-\cvae{} (baseline) & 900 (90000) & 680.5626 \\
-\dettostoc{} (1 iter) & 10 (1000) & 673.4169\\
-\dettostoc{} (2 iter) & 10 (1000) & 673.9966\\
-\dettostoc{} (3 iter) & 10 (1000) & 706.21295\\
-\dettostoc{} (4 iter) & 10 (1000) & \textbf{724.1508}\\
-
-\bottomrule
-\end{tabular}
-\caption{Log likelihood results over the test set on the YuMi Box Pushing Scenario. \dettostoc{} has only seen 1000 \emph{real} samples but still outperforms the baseline model that has trained on 90000 samples.}
-\label{table:yumi_results}
-\end{table}
-
 
 \begin{figure}
 \centering
 \captionsetup{size=footnotesize}
 \begin{subfigure}{\textwidth}
   \includegraphics[width=\textwidth]{img/yumi/latent-representation/latent_encodings_iter0_style}%
-  \caption{Initial estimates of $\vpsi$ before \dettostoc{}}
+  \caption{Prior estimates}
 \end{subfigure}
 \begin{subfigure}{\textwidth}
   \centering
-  \includegraphics[width=\linewidth]{img/yumi/latent-representation/latent_encodings_iter1_6_style}
-  \caption{1st iteration of \dettostoc{}, trained on 600 \emph{real} samples}
+  \includegraphics[width=\linewidth]{img/yumi/latent-representation/latent_encodings_iter4}
+  \caption{After 3 iterations of \dettostoc{}}
 \end{subfigure}
-\caption{Plots show the prior parameters and learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\trajreal{}$ for the \yp{} scenario after four iterations of \dettostoc{}. The parameters correspond (from left-to-right) to tangential friction $\pfriction$ and center of mass $\pcom$. The true distributions $\vth_{\mu, \sigma}$ are outlined in black dashes. In this scenario, \dettostoc{} struggles to match $\pfriction{}$ with the true distribution $\theta_\textsc{friction}$. This can be explained by the fact that the learned policy pushes the box in increments, and small changes in friction do not cause noticeable effects in the movement of the box. The posterior for all iterations can be found in \ref{appendix:a}.}
+\caption{Plots show the prior parameters and learned parameters $\vph_{\mu, \sigma}$ of the posterior given \emph{real} samples $\trajreal{}$ for the \yp{} scenario after three iterations of \dettostoc{}. The parameters correspond (from left-to-right) to tangential friction $\pfriction$ and center of mass $\pcom$. The true distributions $\vth_{\mu, \sigma}$ are outlined in black dashes. In this scenario, \dettostoc{} struggles to match $\pfriction{}$ with the true distribution $\theta_\textsc{friction}$.}
 \label{fig:yumi_latent_space}
 \end{figure}
 
-\section{Implementation details}
+\section{Implementation details and Tools}
 
-Since the KL divergence term in the objective function penalizes priors that diverge from the standard normal distribution, the simulator parameters are translated and scaled to have a mean of 0 and standard deviation of 1:
+Since the KL divergence term in the objective function penalizes posteriors that diverge from the standard normal distribution, the simulator parameters are translated and scaled to have a mean of 0 and standard deviation of 1.
 
-\begin{equation*}
-    z = \frac{x - \mu}{\sigma}
-\end{equation*}
+Rather than trying to output the next state, the target $\vy$ is the delta between next and current state $\vy_{\Delta} = \vns - \vs$.
 
-Rather than trying to output the next state, the target $\vy$ is the delta between next and current state:
-
-\begin{equation*}
-    \vy_{\Delta} = \vns - \vs
-\end{equation*}
-
-\subsection{Tools}
-
-The implementation was done in Python 3.6 and some parts of the \yp{} scenario were written in C++. The neural networks were built using TensorFlow 1.13.1 \parencite{tensorflow2015-whitepaper}. We used MuJoCo Pro 1.50 as physics engine, including the python wrapper by OpenAI.
+The implementation of \dettostoc{} and the \ws{} scenario was written in Python 3.6, and the \yp{} scenario was written in C++. The neural networks were built using TensorFlow 1.13.1 \parencite{tensorflow2015-whitepaper}. We used MuJoCo Pro 1.50 as physics engine, including the Python wrapper by OpenAI.
 %All experiments were conducted on a machine with a Intel Core i7-8700 CPU, NVIDIA GeForce 1080Ti and 16GB of RAM.

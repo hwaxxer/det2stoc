@@ -1,7 +1,7 @@
 \chapter{Methods}
 \label{methods}
 
-This chapter describes the motivation behind the proposed \dettostoc{}, and outlines the algorithm in detail including the network architecture.
+This chapter describes the motivation behind the proposed \dettostoc{} algorithm, and outlines the algorithm and the network architecture in detail.
 
 \section{Motivation}
 
@@ -11,13 +11,13 @@ Consider a physics simulator that correctly describes a dynamical system using l
 
 %These networks are thus universal approximators, in their mapping of input vectors to output vectors, which is what makes them so useful for tasks in artificial intelligence. On the other hand, the sufficient number of hidden units of [26] is not guaranteed to be manageable computationally [27]. As is pointed out by Lin et al. in [27], the reason that a lot of neural network function approximations however indeed seem to work for a variety of tasks [25] is that the class of functions we are actually interested in is tiny, and essentially of low dimensionality, compared to the total collection of estimable functions.
 
-General-purpose simulators like MuJoCo employ efficient dynamics models to make approximations but do not explicitly model uncertainty. MuJoCo is fast, however, in complex scenarios it is still time consuming to compute frictional contacts. In contrast, a forward pass in a neural network is fast, and a hybrid solution that combines deterministic simulators with learnable, stochastic neural networks allows for models that are efficient, expressive and generalizable.
+General-purpose simulators employ efficient dynamics models to make approximations but do not explicitly model uncertainty. Simulation is fast, however, in complex scenarios it is still time consuming to compute frictional contacts. In contrast, a forward pass in a neural network is fast, and a hybrid solution that combines deterministic simulators with learnable, stochastic neural networks allows for models that are efficient, expressive and generalizable.
 
 %information from observed data, for example when there are unknown variables or parameters that cannot be measured, but we have observed data on how the system behaves.
 
-The basic idea of this work is to train a \cvae{} using real data to produce a stochastic simulator, but as mentioned previously, this is not data-efficient. So, instead of starting from random encoder and decoder weights, we will first align the decoder function $\fdecoder{}$ with the output of an existing general-purpose simulator $\fsimulator{}$.
+The idea of this work is to train a \cvae{} using real data to produce a stochastic simulator, but as mentioned previously, this is not data-efficient. So, instead of starting from random encoder and decoder weights, we will first align the decoder function $\fdecoder{}$ with the output of an existing general-purpose simulator $\fsimulator{}$.
 
-Furthermore, real data comes with uncertainty. This uncertainty can be modelled with a generative model such as a \vae{}, and the slightly modified \cvae{} allows us to condition on current state. Moreover, we can use our prior knowledge in a bayesian manner to reason about sensible values that affect the environment.
+Furthermore, real data comes with uncertainty. This uncertainty can be modelled with a generative model such as a \vae{}, and the slightly modified \cvae{} allows us to condition on current state. Moreover, we can use our prior knowledge in a Bayesian manner to reason about sensible values that affect the environment.
 
 Domain and dynamics randomization are powerful techniques to reduce the reality gap. However, as shown with experiments in \parencite{Chebotar2018}, using wide distribution for randomization can cause infeasible solutions that hinder policy learning, or sub-optimal and conservative policies. Instead of adding noise to observations, we introduce noise during simulation by collecting a set of trajectories using a range of simulation parameters $\psi$. 
 
@@ -49,12 +49,12 @@ Our approach specifies how existing general-purpose simulators could be used to 
 \end{algorithm}
 \vspace{\baselineskip}% Insert a blank line
 First, we collect trajectories $\trajreal$ from our real environment.
-We then choose a set of initial parameters that cannot be measured or that have uncertainty associated with them. We decide on an initial distribution $\vpsi_0$ for these parameters, typically an uninformative distribution, for example a uniform distribution or a wide truncated Gaussian distribution.
-In the beginning of each iteration $i$, we run simulations parameterized by samples from $\vpsi_i$ and collect trajectories $\trajsim_{\vpsi_i}=\{\vs, \va, \vns\}^{1:N}$. The decoder network $\fdecoder{}$ is pre-trained separately on the simulated data $\trajsim_{\vec{\psi_i}}{}$ to match $\fsimulator(\vpsi_i)$ using a negative log likelihood loss function. However, during this pre-training phase, instead of sampling $\vz$ from the posterior $\qphi$, the network is fed parameters $\vpsi$ used during simulation for that particular timestep $\fdecoder = f(\vpsi; \vth)$. The intention of this step is to train the decoder to capture how the simulation parameters $\vpsi$ affect the system dynamics.% which will infer parameters $\vpsi_{\mu,\sigma}$ that closely ressemble those of real-world dynamics.
-The \cvae{} is subsequently trained to match $\fpsisimulator{}$, but the decoder weights are kept frozen. The purpose of this step is to train the encoder to produce a posterior that maximizes the log likelihood of the next state $\vns$, while ensuring that the decoder does not catastrophically forget \parencite{French2006CatastrophicFI} what it learned during pretraining. The input to the encoder is state $\vs$, action $\va$ and next state $\vns$. %Including the next state ensures that there is enough information for the network to infer what parameter corresponds to which output.
+We then choose a set of initial parameters that cannot be measured or that have uncertainty associated with them. We decide on an initial distribution $\vpsi_0$ for these parameters, typically an uninformative distribution, for example a uniform distribution or a wide truncated normal distribution.
+In the beginning of each iteration $i$, we run simulations parameterized by samples from $\vpsi_i$ and collect trajectories $\trajsim_{\vpsi_i}=\{\vs, \va, \vns\}^{1:N}$. The decoder network $\fdecoder{}$ is pre-trained separately on the simulated data $\trajsim_{\vec{\psi_i}}{}$ to match $\fsimulator(\vpsi_i)$ using a negative log likelihood loss function. However, during this pre-training phase, instead of sampling $\vz$ from the posterior $\qphi$, the network is fed parameters $\vpsi$ used during simulation. The intention of this step is to train the decoder to capture how the simulation parameters $\vpsi$ affect the system dynamics. % which will infer parameters $\vpsi_{\mu,\sigma}$ that closely ressemble those of real-world dynamics.
+The \cvae{} is subsequently trained on $\trajreal$, but the decoder weights are kept frozen. The purpose of this step is to train the encoder to produce a posterior that maximizes the log likelihood of the next state $\vns$, while ensuring that the decoder does not catastrophically forget what it learned during pretraining. The input to the encoder is state $\vs$, action $\va$ and next state $\vns$. %Including the next state ensures that there is enough information for the network to infer what parameter corresponds to which output.
 Finally, we update our parameters $\vpsi_{i+1}$ with the posterior $\vph_{\mu, \sigma}$.
 
-This process can be repeated multiple times. The result of the \dettostoc{} algorithm is the trained decoder as well as the learned $\vph_{\mu, \sigma}$. Because of how the training procedure was set up, the network is now aligned with real world data.
+This process can be repeated multiple times. The result of the \dettostoc{} algorithm is the trained decoder as well as the learned simulation parameters $\vph_{\mu, \sigma}$. Because of how the training procedure was set up, the network is now aligned with real world data.
 
 %Since the \cvae{} includes the target $\vy$ in the posterior formulation, and we have trained the \cvae{} in a way that it is encouraged to represent the simulator parameters in latent space, we can perform system identification using variational inference and sampling from the posterior $q_{\vth} \given{\vz}{\vx,\vy}$. The idea is that if the \cvae{} has been trained on sufficiently many samples, it should be able to produce a posterior that in fact matches the parameter value that best predict the next state $\vns$.
 
@@ -136,7 +136,7 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
 
     % Annotate the layers
     \node[annot, below right=of he-3, yshift=0.6cm] (encoder) {Encoder};% $q\given{z}{x}$};
-    \node[annot, below right=of hd-3, yshift=0.7cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
+    \node[annot, below right=of hd-3, yshift=0.6cm] (decoder) {Decoder};% $p\given{\hat{x}}{z}$};
     
     \begin{scope}[on background layer]
         %\path[use as bounding box] (0,0) rectangle (10,10);
@@ -160,17 +160,18 @@ This process can be repeated multiple times. The result of the \dettostoc{} algo
     
     %\node[annot, above=of decoderbox] {okokok};
 \end{tikzpicture}
-\caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D target vector $\vec{y}$. Dashed arrows denote sampling from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior.}
+\caption{The \dettostoc{} architecture with a simple network consisting of a 2D vector of inputs $\vec{x}$ and a 2D target vector $\vec{y}$. Dashed arrows denote sampling from probabilistic neurons. The dotted line shows the decoder pre-training phase where $\vpsi$ replaces samples from the posterior. In this phase, the decoder is trained on $\trajsim_{\vpsi}$.}
 \label{fig:det2stoc_architecture}
 \end{figure}
 
 \section{Conditioning architecture and transfer-aware training}
 
-\subsection{Network and training parameters}
-Both the encoder and decoder networks consist of a fully connected MLP with 3 layers of 64 hidden units using ReLU activations and layer normalization \parencite{Ba2016}. The number of latent variables is equal to the number of variable parameters used when collecting the training data from simulation. The output from the encoder and decoder networks are multivariate normal distributions with diagonal covariance matrices.
+%\subsection{Network and training parameters}
+Both the encoder and decoder networks are fully connected MLPs with 3 layers of 64 hidden units using ReLU activations and layer normalization \parencite{Ba2016}. The number of latent variables is equal to the number of variable parameters used when collecting the training data from simulation. The output of both networks are multivariate normal distributions with diagonal covariance matrices.
 
 A common problem during training of a \vae{} is latent variable collapse. When this phenomenon occurs, the \vae{} learns a good generative model of the data but does not learn good representations of the individual data points. Specifically, when maximizing the lower bound of the log marginal likelihood, the posterior ''collapses'' at inference, when the posterior is set equal to the prior, essentially when the posterior is independent of the data. We combat this problem with skip-connections from the posterior to the decoder, essentially enforcing a stronger connection between the latent variables and the likelihood function \parencite{Dieng2018}.
 
 Since the \cvae{} has the target $\vy$ in its posterior formulation, it is prone to overfitting unlike a regular \vae{} which tends to be regularized by the KL divergence term in the ELBO. The authors of \parencite{Sohn2015} suggest adding dropout to the encoder to combat this problem. A dropout rate of $0.2$ is used on the input layer to the encoder and helped avoiding extremely peaked latent space distributions.
 
-A learning rate with cosine decay is used to minimize the loss function using Adam \parencite{kingma2014adam}. We also employed early stopping for during pre-training of the decoder.
+A learning rate with cosine decay is used to minimize the loss function using Adam \parencite{kingma2014adam}. We also employed early stopping for during pre-training of the decoder 
+to avoid overfitting. This becomes especially important since the decoder and $\cvae{}$ are trained on two different datasets.

@@ -7,7 +7,7 @@
 
 
 \usepackage{amsmath,amsthm, amssymb}
-\usepackage[ruled,vlined,linesnumbered]{algorithm2e}  % for BO-DMIX algo
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{wrapfig}
 \usepackage{amsfonts}
 \usepackage{booktabs}
@@ -25,9 +25,6 @@
 \usepackage[font={small}]{caption} % To make image captions smaller
 \usepackage[colorinlistoftodos]{todonotes}
 \usepackage{mathtools}
-% \usepackage{color}
-%\usepackage{hyperref}
-%\usepackage{verbatim}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,bayesnet,backgrounds,calc,decorations.pathreplacing}
 \usepackage{enumitem}  % for tighter list spacing
@@ -38,9 +35,6 @@
 
 % Smaller bullets in lists.
 \newlength{\mylen}
-% \setbox1=\hbox{$\bullet$}\setbox2=\hbox{\tiny$\bullet$}
-% \setlength{\mylen}{\dimexpr0.5\ht1-0.5\ht2} 
-% \setlist[itemize]{itemsep=0mm, topsep=2pt}
 
 %======================================================
 \newcommand{\vz}{\boldsymbol{z}}
@@ -92,6 +86,7 @@
 
 \newcommand{\trajsim}{\vec{\xi}^{sim}}
 \newcommand{\trajreal}{\vec{\xi}^{real}}
+\newcommand{\trajrealtest}{\vec{\tau}^{real}}
 
 \newcommand{\ws}{Windy Slope}
 \newcommand{\yp}{YuMi Pusher}
@@ -109,7 +104,7 @@
 %======================================================
 
 \title{det2stoc -- Converting Deterministic Simulators to Realistic Stochastic Models via Data Alignment}
-\alttitle{det2stoc -- Omvandla Deterministiska Simulatorer till Realistiska Stokastiska Modeller via Data Justering.}
+\alttitle{det2stoc -- Konvertera Deterministiska Simulatorer till Realistiska Stokastiska Modeller via Datajustering}
 \author{Martin Hwasser}
 \email{hwasser@kth.se}
 \supervisor{Rika Antonova}
@@ -118,7 +113,7 @@
 \school{School of Electrical Engineering and Computer Science}
 \date{\today}
 
-\kthcover{kth-cover.pdf}
+\kthcover{cover.pdf}
 
 \begin{document}
 \frontmatter
@@ -127,15 +122,18 @@
 % ABSTRACT
 % ======================================================
 \begin{abstract}
-Simulation is commonly used to train agents in Reinforcement Learning since they provide an abundance of data that in many cases can be generated faster than real-time. However, the behaviors learned by the agent will be specific to attributes of the simulator and may not perform well when transferred to the real world. This thesis describes an algorithm that can be used to minimize the discrepancy between simulation and reality. Using this algorithm, it is possible to both identify parameters of the simulator whose true values are unknown, and learn a generative model that can produce output that is close to real-world dynamics.
+Simulation is commonly used to train agents in Reinforcement Learning since they provide an abundance of data that in many cases can be generated faster than real-time. However, the behaviors learned by the agent are often specific to attributes of the simulator and may not perform well when transferred to the real world. This thesis describes an algorithm that can be used to minimize the discrepancy between simulation and reality. Using this algorithm, it is possible to both identify parameters of the simulator that results in more accurate simulation of reality, and learn a generative model that can produce output that is close to real-world dynamics.
 
+%We first show that the components of this algorithm are well-suited to solve an example analytic problem.
 We first show how this algorithm works on a problem that can be solved analytically. We then demonstrate that the algorithm successfully handles more elaborate environments with physics simulation involving contact between objects and control actions.
 
 %And finally, we show that the algorithm can be used to facilitate training an agent in simulation and transferring the learned policy to a real robot.
 \end{abstract}
 \begin{otherlanguage}{swedish}
   \begin{abstract}
-    \todo[inline]{En abstract på svenska.}
+    Simulering används vanligtvis för att träna agenter inom Reinforcement Learning eftersom de erbjuder stora mängder data som i många fall kan genereras fortare än realtid. Dock är de beteenden som agenten lär sig ofta specifika för simulatorns attributer och kommer inte nödvändigtvis att prestera väl när de överförs till verkligheten. Detta arbete beskriver en algoritm som kan användas för att minimera skillnaderna mellan simulering och verklighet. Med denna algoritm är det möjligt att både identifiera de simulatorparametrar som resulterar i bättre simulering av verkligheten, och att lära en generativ modell att producera data som liknar verklig dynamik.
+    
+    Vi visar först att komponenterna som används i algoritmen är väl anpassade för att lösa ett analytiskt exempelproblem. Vi demonstrerar sedan att algoritmen med framgång hanterar mer sofistikerade miljöer med fysiksimulering som involverar kontakt mellan object samt styrsignaler.
   \end{abstract}
 \end{otherlanguage}
 
