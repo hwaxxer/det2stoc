@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import numpy as np
 import mujoco_py
@@ -10,13 +11,13 @@ from enum import Enum
 import imageio
 from scipy import stats
 
-np.set_printoptions(precision=5, suppress=True)
+np.set_printoptions(precision=4, suppress=True)
 MAX_TIME = 4.0
+
 
 class WindySlope(object):
 
     def __init__(self, model, mode, hertz=25, should_render=True, should_screenshot=False):
-
         self.hertz = hertz
         self.steps = 0
         self.should_render = should_render
@@ -55,11 +56,8 @@ class WindySlope(object):
         return obs
 
     def get_observations(self, model, data):
-
         self.sim.forward()
-
         obs = []
-
         name = 'box'
         pos = data.get_body_xpos(name)
         xmat = data.get_body_xmat(name).reshape(-1)
@@ -80,12 +78,9 @@ class WindySlope(object):
         # original image is upside-down, so flip it
         img = img[::-1, :, :]
         imageio.imwrite(image_path, img)
-        #self.viewer._hide_overlay = False
 
     def step(self):
         nsubsteps = self.nsubsteps
-        if False and self.mode == mode.REAL:
-            nsubsteps += np.random.randint(-2,2)
         for _ in range(nsubsteps):
             self.sim.step()
             self.render()
@@ -99,7 +94,6 @@ class WindySlope(object):
 
 
     def euler2quat(self, euler):
-        """ Convert Euler Angles to Quaternions.  See rotation.py for notes """
         euler = np.asarray(euler, dtype=np.float64)
         assert euler.shape[-1] == 3, "Invalid shape euler {}".format(euler)
 
@@ -145,15 +139,10 @@ def replay(time, step, qpos, qvel, qacc, n=1000):
         f, i, w = sample_parameters(mode)
         randomize_dynamics(model, friction=f, insidebox=i, wind=w)
         env = WindySlope(model, mode.REAL, should_render=should_render)
-        #env.sim.reset()
-        #env.sim.set_state(sim_state)
         env.data.time = time
         env.data.qpos[:] = qpos
         env.data.qvel[:] = qvel
         env.data.qacc_warmstart[:] = qacc
-        #env.data.qacc[:] = qacc
-        #functions.mj_inverse(env.model, env.data)
-        #env.data.qfrc_applied[:] = env.data.qfrc_inverse[:].copy()
         assert env.sim.get_state() == sim_state
 
         obs_before = env.get_observations(env.model, env.data)
@@ -167,12 +156,9 @@ def replay(time, step, qpos, qvel, qacc, n=1000):
         l = np.array(l)
         states.append(l)
 
-
         assert np.count_nonzero(before - obs_before) == 0, 'wrong'
-        #assert np.allclose(after, obs_after)
 
-    filename = 'new-states-step{}.npz'.format(step)
-    print('filename: ', filename)
+    filename = 'states-step{}.npz'.format(step)
     with open(filename, 'wb') as f:
         np.save(f, states)
 
@@ -187,14 +173,13 @@ def sample_parameters(mode):
         w = np.random.normal(wind_mean, wind_std)
     else:
         f = np.random.normal(friction, 0.01)
-        i = np.random.normal(insidebox, 0.04)#truncnorm(0, 0.25, scale=0.04, mean=insidebox).rvs()
+        i = np.random.normal(insidebox, 0.04)
         w = np.random.normal(wind, 0.05)
 
     return f, i, w
 
 if __name__ == '__main__':
 
-    import sys
 
     np.random.seed(6)
 
@@ -211,7 +196,7 @@ if __name__ == '__main__':
     insidebox_scale = 0.2
     wind_scale = 1.0
 
-    n_episodes = 10 if mode == Mode.REAL else 10000
+    n_episodes = 100 if mode == Mode.REAL else 10000
 
     if mode == Mode.UNIFORM:
         friction_lo, friction_hi = 0.1, 0.4
@@ -220,43 +205,6 @@ if __name__ == '__main__':
         name = ('data/obstacle/windyplane_{}_f-lo{:.2f}-hi{:.2f}_i-lo{:.4f}-hi{:.4f}_wind-lo{:.2f}-hi{:.2f}'
             .format(n_episodes, friction_lo, friction_hi, insidebox_lo, insidebox_hi, wind_lo, wind_hi))
     elif mode == Mode.NORMAL:
-
-        # Obstacle 1
-        friction_mean, insidebox_mean, wind_mean = [0.23145214, 0.08051437, -1.6087899]
-        friction_std, insidebox_std, wind_std = [0.030884951, 0.07131884, 0.1999271]
-
-        # 2
-        friction_mean, insidebox_mean, wind_mean = [0.23052432, 0.09517312, -1.6797453]
-        friction_std, insidebox_std, wind_std = [0.015919229, 0.044263765, 0.086433195]
-
-        # 3
-        friction_mean, insidebox_mean, wind_mean = [0.22923839, 0.100576766, -1.7020139]
-        friction_std, insidebox_std, wind_std = [0.014197641, 0.043702506, 0.08196261]
-
-        # 4
-        friction_mean, insidebox_mean, wind_mean = [0.2277441, 0.09846668, -1.707527]
-        friction_std, insidebox_std, wind_std = [ 0.012916554, 0.037268706, 0.066763945]
-
-        # 5
-        friction_mean, insidebox_mean, wind_mean = [0.2314627, 0.107147604, -1.7108632]
-        friction_std, insidebox_std, wind_std = [0.010509214, 0.038317695, 0.054610126]
-
-        # start small 1
-        friction_mean, insidebox_mean, wind_mean = [0.23920722, 0.06574642, -1.6578083]
-        friction_std, insidebox_std, wind_std = [0.048439663, 0.11193866, 0.48753765]
-
-        friction_mean, insidebox_mean, wind_mean = [0.24201852, 0.10245959, -1.7766744]
-        friction_std, insidebox_std, wind_std = [0.03232244, 0.0761206, 0.2807543]
-
-        friction_mean, insidebox_mean, wind_mean = [0.22382759, 0.09290794, -1.7550149]
-        friction_std, insidebox_std, wind_std = [0.02220709, 0.051947754, 0.1245596]
-
-        friction_mean, insidebox_mean, wind_mean = [0.22793925, 0.088171445, -1.7180542]
-        friction_std, insidebox_std, wind_std = [0.015473831, 0.05157737, 0.06606873]
-
-        friction_mean, insidebox_mean, wind_mean = [0.23086026, 0.11387068, -1.6978598]
-        friction_std, insidebox_std, wind_std = [0.009069826, 0.03657474, 0.036390096]
-
         name = ('data/obstacle/windyplane_{}_friction-mean{:.4f}-std{:.4f}_insidebox-mean{:.4f}-std{:.4f}_wind-mean{:.2f}-std{:.4f}'
             .format(n_episodes, friction_mean, friction_std, insidebox_mean, insidebox_std, wind_mean, wind_std))
     else:
@@ -286,13 +234,12 @@ if __name__ == '__main__':
         print('f: {}, i: {}, wind: {}'.format(f, i, w))
 
         for step in range(100):
-            if mode == mode.REAL and 0 <= snapshot_step and step+1 == snapshot_step:
+            if mode == Mode.REAL and 0 <= snapshot_step and step+1 == snapshot_step:
                 qpos = env.data.qpos.copy()
                 qvel = env.data.qvel.copy()
                 qacc = env.data.qacc.copy()
                 time = env.data.time
                 sim_state = env.sim.get_state()
-                #env.sim.forward()
                 before = env.get_observations(env.model, env.data)
 
             l = []
@@ -313,9 +260,9 @@ if __name__ == '__main__':
                 replay(time, snapshot_step, qpos, qvel, qacc)
                 snapshot_step = -1
 
-            if False and step+1 in [1, 50, 100]:
+            if mode == mode.REAL and step+1 in [1, 50, 100]:
                 env.screenshot('traj/windyslope-real-all-obs-{}.png'.format(step+1))
-            if True and step+1 == screenshot_step:
+            if step+1 == screenshot_step:
                 geomid = env.model.geom_name2id('box')
                 pos = env.data.geom_xpos[geomid]
                 mat = env.data.geom_xmat[geomid].reshape(-1)
