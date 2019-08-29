@@ -1,0 +1,15 @@
+<mujoco model="table">
+    <compiler texturedir="textures"/>
+    <asset>
+        <texture file="marble.png" type="2d"/>
+        <material name="marble" texture="marble" specular="0.6" shininess="0.9" texrepeat="1 1"/>
+        <material name="table" specular="0.8" shininess="0.2" texrepeat="1 1" rgba="1 1 1 1"/>
+    </asset>
+    <worldbody>
+        <!--geom name="floor" pos="0.4 0 0.04" size="1 1 1" type="plane" material="marble" /-->
+        <!-- Table is a bit higher up 11mm -->
+        <body name="table" pos="0.45 0 0.041" >
+            <geom name="table" pos="0 0 0.005" size="0.301 0.475 0.005" material="table" rgba="1 1 1 1" type="box" margin="0"/>
+        </body>
+    </worldbody>
+</mujoco>
