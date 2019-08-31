@@ -6,7 +6,7 @@ from stable_baselines.her import GoalSelectionStrategy, HERGoalEnvWrapper
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 from stable_baselines.common import set_global_seeds
 from stable_baselines.bench import Monitor
-from yumi import *
+from yumi_goalenv import *
 import argparse
 from scipy import stats
 
@@ -15,7 +15,7 @@ parser.add_argument('--render', help='render', default=False, action='store_true
 
 args = parser.parse_args()
 
-log_dir = "/tmp/yumi/{}".format(int(time.time()))
+log_dir = "/tmp/yumi/her/{}".format(int(time.time()))
 os.makedirs(log_dir, exist_ok=True)
 
 n_cpu = 10

@@ -14,10 +14,10 @@ parser.add_argument('--render', help='render', default=False, action='store_true
 
 args = parser.parse_args()
 
-log_dir = "/tmp/yumi/{}".format(int(time.time()))
+log_dir = "/tmp/yumi/ppo2/{}".format(int(time.time()))
 os.makedirs(log_dir, exist_ok=True)
 
-n_cpu = 10
+n_cpu = 12
 
 ranges = [(0.15, 0.3), (-0.45, 0.045)]
 ranges = [(0.23, 0.23), (0.035, 0.035)]
@@ -42,7 +42,7 @@ def callback(_locals, _globals):
     n_steps += 1
     if n_steps % 100 == 0:
         print('Saving: ', n_steps)
-        model.save('checkpoints/yumi/ppo2-yumi-{}'.format(n_steps))
+        model.save('checkpoints/yumi/ppo2/ppo2-yumi-{}'.format(n_steps))
 
     return True
 

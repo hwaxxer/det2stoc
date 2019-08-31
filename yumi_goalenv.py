@@ -85,7 +85,7 @@ class YuMi(gym.GoalEnv):
             'desired_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
             'achieved_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32)
             })
-        return d['observation']
+        return d
 
     def simstep(self):
         try:
@@ -263,7 +263,7 @@ class YuMi(gym.GoalEnv):
 
         obs = np.array(obs)
         observations['observation'] = obs
-        return obs
+        return observations
 
     def render(self):
         if self.should_render:
@@ -301,8 +301,7 @@ class YuMi(gym.GoalEnv):
 
             stop_early = self.simstep()
 
-            desired_goal = self.data.get_site_xpos('site:goal')
-            achieved_goal = self.data.get_site_xpos('site:target')
+            achieved_goal, desired_goal = obs['achieved_goal'], obs['desired_goal']
             reward = self.compute_reward(achieved_goal, desired_goal, {})
 
             completed = reward == 1.0
