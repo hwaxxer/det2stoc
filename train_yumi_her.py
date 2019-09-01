@@ -6,7 +6,7 @@ from stable_baselines.her import GoalSelectionStrategy, HERGoalEnvWrapper
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 from stable_baselines.common import set_global_seeds
 from stable_baselines.bench import Monitor
-from yumi_goalenv import *
+from yumi import *
 import argparse
 from scipy import stats
 
@@ -23,11 +23,13 @@ n_cpu = 10
 ranges = [(0.15, 0.3), (-0.45, 0.045)]
 ranges = [(0.23, 0.23), (0.035, 0.035)]
 
+path = os.path.join(os.getcwd(), './models/cheezit_3.xml')
+name = os.path.basename(path)
 
 def make_env(render, i, seed=0):
     def create_yumi():
         dynamics = lambda: [np.random.uniform(lo, hi) for lo, hi in ranges]
-        return YuMi(render=render, seed=seed, dynamics=dynamics)
+        return YuMi(path, goal_env=True, render=render, seed=seed, dynamics=dynamics)
 
     return create_yumi
 
@@ -41,14 +43,14 @@ def callback(_locals, _globals):
     global n_steps
      
     n_steps += 1
-    if n_steps % 1000 == 0:
+    if n_steps % 10000 == 0:
         print('Saving: ', n_steps)
-        model.save('checkpoints/yumi/her-yumi-{}'.format(n_steps))
+        model.save('checkpoints/yumi/her/her-{}-{}'.format(name, n_steps))
 
     return True
 
 
-model = HER('MlpPolicy', env, model_class=DDPG, verbose=1, tensorboard_log=log_dir)
+model = HER('MlpPolicy', env, model_class=DDPG, verbose=1, tensorboard_log=log_dir, **dict(random_exploration=.2))
 model.learn(total_timesteps=total_timesteps, callback=callback)
 model.save("her-yumi-{}-final".format(n_steps))
 

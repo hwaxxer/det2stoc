@@ -9,6 +9,7 @@ import xml.etree.ElementTree as EE
 import gym
 from gym import spaces
 import tensorflow as tf
+from utils import *
 
 
 np.set_printoptions(precision=7, suppress=True)
@@ -20,14 +21,14 @@ class YuMi(gym.GoalEnv):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, dynamics, hertz=25, render=True, seed=0):
+    def __init__(self, path, dynamics, goal_env=False, hertz=25, render=True, seed=0):
 
         print('seed: ', seed)
         tf.set_random_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
+        self.goal_env = goal_env
 
-        path = os.path.join(os.getcwd(), './models/cheezit_0.xml')
         self.path = path
         model = load_model_from_path(path)
 
@@ -85,7 +86,10 @@ class YuMi(gym.GoalEnv):
             'desired_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
             'achieved_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32)
             })
-        return d['observation']
+        if self.goal_env:
+            return d
+        else:
+            return d['observation']
 
     def simstep(self):
         try:
@@ -161,8 +165,8 @@ class YuMi(gym.GoalEnv):
     def set_initial_pose(self):
         self.data.set_joint_qpos('yumi_joint_1_l', 1.)
         self.data.set_joint_qpos('yumi_joint_1_r', -1.)
-        self.data.set_joint_qpos('yumi_joint_2_l', 0.2)
-        self.data.set_joint_qpos('yumi_joint_2_r', 0.2)
+        self.data.set_joint_qpos('yumi_joint_2_l', 0.1)
+        self.data.set_joint_qpos('yumi_joint_2_r', 0.1)
 
         ''' randomize goal
         goal_id = self.model.body_name2id('goal')
@@ -175,6 +179,12 @@ class YuMi(gym.GoalEnv):
         start, end = self.model.get_joint_qpos_addr('target')
         qpos = self.data.qpos[start:end]
         qpos[0:2] += np.random.uniform(-0.02, 0.02, size=(2,))
+
+        quat = qpos[3:]
+        euler = quat2euler(quat)
+        euler[1] += np.random.uniform(-0.1, 0.1)
+        qpos[3:] = euler2quat(euler)
+
 
     def quat2mat(self, quat):
         result = np.empty(9, dtype=np.double)
@@ -263,7 +273,10 @@ class YuMi(gym.GoalEnv):
 
         obs = np.array(obs)
         observations['observation'] = obs
-        return obs
+        if self.goal_env:
+            return observations
+        else:
+            return obs
 
     def render(self):
         if self.should_render:
@@ -281,6 +294,9 @@ class YuMi(gym.GoalEnv):
         action = np.clip(action, self.action_space.low, self.action_space.high)
         action += self.joint_states_vel
 
+        # Perturbate action
+        action += np.random.normal(0, 0.001, size=len(action))
+
         # MAX_TIME seconds
         self.steps += 1
 
@@ -291,10 +307,19 @@ class YuMi(gym.GoalEnv):
 
         obs = self.get_observations()
 
+        if self.joint_states_pos[0] > 1.5:
+            action[0] = min(action[0], 0)
+        if self.joint_states_pos[1] < -1.5:
+            action[0] = max(action[0], 0)
+
         if self.joint_states_pos[2] > 0.3:
             action[2] = min(action[2], 0)
         if self.joint_states_pos[3] > 0.3:
             action[3] = min(action[3], 0)
+        if self.joint_states_pos[2] < -0.3:
+            action[2] = max(action[2], 0)
+        if self.joint_states_pos[3] < -0.3:
+            action[3] = max(action[3], 0)
 
         if not terminal:
             self.data.userdata[:] = action
@@ -304,8 +329,18 @@ class YuMi(gym.GoalEnv):
             desired_goal = self.data.get_site_xpos('site:goal')
             achieved_goal = self.data.get_site_xpos('site:target')
             reward = self.compute_reward(achieved_goal, desired_goal, {})
-
             completed = reward == 1.0
+
+            names = ['left_gripper_base', 'right_gripper_base']
+            for name in names:
+                pos = self.data.get_body_xpos(name)
+                gripper_distance = self.get_distance(achieved_goal, pos)
+                target_id = self.model.geom_name2id('target')
+                radius = max(self.model.geom_size[target_id])
+
+                penalty = max(0, gripper_distance - radius)
+                reward -= penalty
+                
             reward -= action_penalty
             terminal = self.steps == self.horizon
 
@@ -315,15 +350,15 @@ class YuMi(gym.GoalEnv):
                 if completed:
                     print('************ Completed ************')
         else: 
-            reward = -3
+            reward = -10
 
         return obs, reward, terminal, {}
 
-    def goal_distance(self, a, b):
+    def get_distance(self, a, b):
         return np.linalg.norm(a - b, axis=-1)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        distance = self.goal_distance(achieved_goal, desired_goal)
+        distance = self.get_distance(achieved_goal, desired_goal)
         reward, _ = self.get_reward(distance)
         return reward
 
