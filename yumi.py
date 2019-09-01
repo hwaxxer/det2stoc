@@ -159,7 +159,7 @@ class YuMi(gym.GoalEnv):
         self.sim.forward()
 
         obs = self.get_observations()
-        #print('Reset returning: ', obs)
+        print('Reset returning: ', obs)
         return obs
 
     def set_initial_pose(self):
@@ -279,6 +279,7 @@ class YuMi(gym.GoalEnv):
             self.target_hist.append(np.hstack([pos, mat]))
         self.target_hist.append(np.hstack([pos, mat]))
         obs.extend(np.ravel(self.target_hist))
+        #print('target pos: ', pos, 'rot: ', euler2quat(mat2euler(mat)))
 
         target_id = model.geom_name2id('target')
         mass = model.body_mass[target_id]
@@ -360,14 +361,14 @@ class YuMi(gym.GoalEnv):
                 
             reward -= action_penalty
             terminal = self.steps == self.horizon
-
-            if self.steps % self.hertz == 0:
-                print('Step: {}, reward: {}, completed: {}'.format( 
-                    self.steps, reward, completed))
-                if completed:
-                    print('************ Completed ************')
         else: 
             reward = -10
+
+        if self.steps % self.hertz == 0:
+            print('Step: {}, reward: {}, completed: {}'.format( 
+                self.steps, reward, completed))
+            if completed:
+                print('************ GOAL ACHIEVED ************')
 
         return obs, reward, terminal, {}
 

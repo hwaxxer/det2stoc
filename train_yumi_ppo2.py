@@ -45,7 +45,7 @@ def callback(_locals, _globals):
     global n_steps
      
     n_steps += 1
-    if n_steps % 1000 == 0:
+    if n_steps % 100 == 0:
         print('Saving: ', n_steps)
         model.save('checkpoints/yumi/ppo2/ppo2-{}-{}'.format(name, n_steps))
 
