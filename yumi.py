@@ -183,7 +183,24 @@ class YuMi(gym.GoalEnv):
         quat = qpos[3:]
         euler = quat2euler(quat)
         euler[1] += np.random.uniform(-0.1, 0.1)
+        #euler[2] += np.random.uniform(-0.1, 0.1)
         qpos[3:] = euler2quat(euler)
+
+        #task = 0
+        #if task == 1:
+        #    euler[:] += 1.5708
+        #elif task == 2:
+        #    euler[0] += 1.5708
+
+
+        #self.sim.forward()
+        #id = self.model.body_name2id('goal')
+        #target_id = self.model.body_name2id('target')
+        #pos = self.model.body_pos[id]
+        #pos[2] = self.model.body_pos[target_id][-1]
+        #self.model.body_pos[id] = pos
+
+        #qpos[3:] = euler2quat(euler)
 
 
     def quat2mat(self, quat):

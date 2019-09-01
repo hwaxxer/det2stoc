@@ -11,13 +11,14 @@ from scipy import stats
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--render', help='render', default=False, action='store_true')
+parser.add_argument('--xml-path', help='path to model xml', default='models/cheezit_0.xml')
 
 args = parser.parse_args()
 
 log_dir = "/tmp/yumi/ppo2/{}".format(int(time.time()))
 os.makedirs(log_dir, exist_ok=True)
 
-path = os.path.join(os.getcwd(), './models/cheezit_3.xml')
+path = args.xml_path
 name = os.path.basename(path)
 print('name: ', name)
 

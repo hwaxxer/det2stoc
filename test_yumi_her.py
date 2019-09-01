@@ -12,10 +12,12 @@ from yumi import *
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('model_path', help='path to model')
+parser.add_argument('--xml-path', help='path to model xml', default='./models/cheezit_0.xml')
 parser.add_argument('--render', help='render', default=False, action='store_true')
 
 args = parser.parse_args()
 
+path = args.xml_path
 n_cpu = 1
 
 real = True
@@ -44,8 +46,6 @@ def dynamics_params(seed):
 def dynamics_generator(seed):
     return lambda: dynamics_params(seed)
 
-
-path = os.path.join(os.getcwd(), './models/cheezit_2.xml')
 
 def make_env(render, i, seed=0):
     def create_yumi():

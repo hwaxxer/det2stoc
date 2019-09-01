@@ -12,10 +12,12 @@ from yumi import *
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('model_path', help='name of model')
+parser.add_argument('--xml-path', help='path to model xml', default='./models/cheezit_0.xml')
 parser.add_argument('--render', help='render', default=False, action='store_true')
 
 args = parser.parse_args()
-path = os.path.join(os.getcwd(), './models/cheezit_2.xml')
+
+path = args.xml_path
 
 n_cpu = 1
 
