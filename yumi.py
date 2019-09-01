@@ -149,8 +149,8 @@ class YuMi(gym.GoalEnv):
         self.data.qacc[:] = 0
         self.data.qvel[:] = 0
 
-        model = load_model_from_path(self.path)
-        self.randomize_dynamics(model)
+        #model = load_model_from_path(self.path)
+        self.randomize_dynamics(self.model)
         #self.model = model
         self.sim.reset()
 
