@@ -7,7 +7,7 @@
     <option timestep="0.001" gravity="0 0 -9.81" iterations="100" integrator="Euler" cone="elliptic"  />
     <!-- Copied from PR2 model in GPS. This was necessary to get natural behaviour -->
     <default>
-        <joint armature="0.04" damping="1.0" limited="true" margin="0.01" />
+        <joint armature="0.04" limited="true" margin="0.01" />
         <geom friction=".5" margin="0.001"/>
     </default>
     <size njmax="500" nconmax="100" />

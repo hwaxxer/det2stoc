@@ -9,8 +9,11 @@ import xml.etree.ElementTree as EE
 import gym
 from gym import spaces
 import tensorflow as tf
+import logging
 from utils import *
 
+logger = logging.getLogger('YuMi')
+logger.setLevel(logging.DEBUG)
 
 np.set_printoptions(precision=7, suppress=True)
 MAX_TIME = 4.0 
@@ -23,7 +26,7 @@ class YuMi(gym.GoalEnv):
 
     def __init__(self, path, dynamics, goal_env=False, hertz=25, render=True, seed=0):
 
-        print('seed: ', seed)
+        logger.debug('seed: %s' % seed)
         tf.set_random_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
@@ -279,7 +282,6 @@ class YuMi(gym.GoalEnv):
             self.target_hist.append(np.hstack([pos, mat]))
         self.target_hist.append(np.hstack([pos, mat]))
         obs.extend(np.ravel(self.target_hist))
-        #print('target pos: ', pos, 'rot: ', euler2quat(mat2euler(mat)))
 
         target_id = model.geom_name2id('target')
         mass = model.body_mass[target_id]
