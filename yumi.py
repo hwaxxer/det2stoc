@@ -371,7 +371,7 @@ class YuMi(gym.GoalEnv):
                 radius = max(self.model.geom_size[target_id])
 
                 penalty = max(0, gripper_distance - radius)
-                reward -= penalty
+                reward -= 0.1*penalty
                 
             reward -= action_penalty
             terminal = self.steps == self.horizon
