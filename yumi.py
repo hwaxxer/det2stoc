@@ -194,6 +194,14 @@ class YuMi(gym.GoalEnv):
             # rotate x=90 deg
             quat = rotations.euler2quat(np.array([np.pi/2, 0, 0]))
             z_idx = 1
+        elif self.task == 2:
+            # do nothing
+            quat = rotations.euler2quat(np.array([0, 0, 0]))
+            z_idx = 2
+        elif self.task == 3:
+            # rotate z=-90 deg 
+            quat = rotations.euler2quat(np.array([0, 0, -np.pi/2]))
+            z_idx = 2
         else:
             raise Exception('Additional tasks not implemented.')
 
@@ -207,7 +215,8 @@ class YuMi(gym.GoalEnv):
         body_pos[2] = target_qpos[2]
         body_quat[:] = quat
 
-        perturbation = np.array([np.random.uniform(-0.2, 0.2), 0, 0])
+        perturbation = np.zeros(3)
+        perturbation[z_idx] = np.random.uniform(-0.2, 0.2)
         euler = rotations.quat2euler(quat)
         euler = rotations.subtract_euler(euler, perturbation)
         target_qpos[3:] = rotations.euler2quat(euler)
