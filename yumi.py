@@ -464,7 +464,7 @@ class YuMi(gym.GoalEnv):
             body2_cfrc = sim.data.cfrc_ext[bodyid2]
             body2_contact_force_norm = np.sqrt(np.sum(np.square(body2_cfrc)))
 
-            max_cfrc = 10 # Arbitrary limit 
+            max_cfrc = 20 # Arbitrary limit 
             if max_cfrc < body1_contact_force_norm or max_cfrc < body2_contact_force_norm:
                 bad_collision = True
                 print('Contact force on: ', bodyname1, ': ', body1_contact_force_norm)
