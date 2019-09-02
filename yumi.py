@@ -189,23 +189,29 @@ class YuMi(gym.GoalEnv):
         if self.task == 0:
             # rotate y=-90 deg
             quat = rotations.euler2quat(np.array([0, -np.pi/2, 0]))
-
-            target_id = self.model.geom_name2id('target')
-            x = self.model.geom_size[target_id][0]
-            target_qpos[2] = 0.051 + x
-
-            goal_id = self.model.body_name2id('goal')
-            body_pos = self.model.body_pos[goal_id]
-            body_quat = self.model.body_quat[goal_id]
-            body_pos[2] = target_qpos[2]
-            body_quat[:] = quat
-
-            perturbation = np.array([np.random.uniform(-0.2, 0.2), 0, 0])
-            euler = rotations.quat2euler(quat)
-            euler = rotations.subtract_euler(euler, perturbation)
-            target_qpos[3:] = rotations.euler2quat(euler)
+            z_idx = 0
         elif self.task == 1:
-            pass
+            # rotate x=90 deg
+            quat = rotations.euler2quat(np.array([np.pi/2, 0, 0]))
+            print('quat:', quat)
+            z_idx = 1
+        else:
+            raise Exception('Additional tasks not implemented.')
+
+        target_id = self.model.geom_name2id('target')
+        height = self.model.geom_size[target_id][z_idx]
+        target_qpos[2] = 0.051 + height
+
+        goal_id = self.model.body_name2id('goal')
+        body_pos = self.model.body_pos[goal_id]
+        body_quat = self.model.body_quat[goal_id]
+        body_pos[2] = target_qpos[2]
+        body_quat[:] = quat
+
+        perturbation = np.array([np.random.uniform(-0.2, 0.2), 0, 0])
+        euler = rotations.quat2euler(quat)
+        euler = rotations.subtract_euler(euler, perturbation)
+        target_qpos[3:] = rotations.euler2quat(euler)
 
     def quat2mat(self, quat):
         result = np.empty(9, dtype=np.double)
