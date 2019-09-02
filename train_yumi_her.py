@@ -19,22 +19,18 @@ args = parser.parse_args()
 log_dir = "/tmp/yumi/her/{}".format(int(time.time()))
 os.makedirs(log_dir, exist_ok=True)
 
-n_cpu = 10
-
-ranges = [(0.15, 0.3), (-0.45, 0.045)]
 ranges = [(0.23, 0.23), (0.035, 0.035)]
 
 name = os.path.basename(args.xml_path)
 
-def make_env(render, i, seed=0):
+def make_env(render, seed=0):
     def create_yumi():
         dynamics = lambda: [np.random.uniform(lo, hi) for lo, hi in ranges]
         return YuMi(args.xml_path, goal_env=True, render=render, seed=seed, dynamics=dynamics)
 
     return create_yumi
 
-seeds = np.arange(n_cpu)
-env = SubprocVecEnv([make_env(args.render, i, seed=i) for i in range(1)])
+env = DummyVecEnv([make_env(args.render, seed=17)])
 
 n_steps = 0
 total_timesteps = int(100e6)
@@ -45,7 +41,7 @@ def callback(_locals, _globals):
     n_steps += 1
     if n_steps % 10000 == 0:
         print('Saving: ', n_steps)
-        model.save('checkpoints/yumi/her/her-{}-{}'.format(name, n_steps))
+        model.save('checkpoints/yumi/her/her-{}-{}.npy'.format(name, n_steps))
 
     return True
 

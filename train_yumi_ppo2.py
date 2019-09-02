@@ -20,11 +20,9 @@ os.makedirs(log_dir, exist_ok=True)
 
 path = args.xml_path
 name = os.path.basename(path)
-print('name: ', name)
 
-n_cpu = 32
+n_cpu = 12
 
-ranges = [(0.15, 0.3), (-0.45, 0.045)]
 ranges = [(0.23, 0.23), (0.035, 0.035)]
 
 
@@ -47,7 +45,7 @@ def callback(_locals, _globals):
     n_steps += 1
     if n_steps % 100 == 0:
         print('Saving: ', n_steps)
-        model.save('checkpoints/yumi/ppo2/ppo2-{}-{}'.format(name, n_steps))
+        model.save('checkpoints/yumi/ppo2/ppo2-{}-{}.npy'.format(name, n_steps))
 
     return True
 
