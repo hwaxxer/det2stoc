@@ -13,7 +13,7 @@ from scipy import stats
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--render', help='render', default=False, action='store_true')
 parser.add_argument('--xml-path', help='path to model xml', default='models/cheezit.xml')
-parser.add_argument('--task', help='task to solve', default=0)
+parser.add_argument('--task', help='task to solve', default=0, type=int)
 
 args = parser.parse_args()
 
