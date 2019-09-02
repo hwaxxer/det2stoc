@@ -11,7 +11,8 @@ from scipy import stats
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--render', help='render', default=False, action='store_true')
-parser.add_argument('--xml-path', help='path to model xml', default='models/cheezit_0.xml')
+parser.add_argument('--xml-path', help='path to model xml', default='models/cheezit.xml')
+parser.add_argument('--task', help='task to solve', default=0)
 
 args = parser.parse_args()
 
@@ -29,7 +30,7 @@ ranges = [(0.23, 0.23), (0.035, 0.035)]
 def make_env(path, render, i, seed=0):
     def create_yumi():
         dynamics = lambda: [np.random.uniform(lo, hi) for lo, hi in ranges]
-        return YuMi(path, render=render, seed=seed, dynamics=dynamics)
+        return YuMi(path, task=args.task, render=render, seed=seed, dynamics=dynamics)
 
     return create_yumi
 
@@ -45,7 +46,7 @@ def callback(_locals, _globals):
     n_steps += 1
     if n_steps % 100 == 0:
         print('Saving: ', n_steps)
-        model.save('checkpoints/yumi/ppo2/ppo2-{}-{}.npy'.format(name, n_steps))
+        model.save('checkpoints/yumi/ppo2/ppo2_{}_task_{}_{}.npy'.format(name, args.task, n_steps))
 
     return True
 

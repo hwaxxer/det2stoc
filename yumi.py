@@ -24,13 +24,14 @@ class YuMi(gym.GoalEnv):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, path, dynamics, goal_env=False, hertz=25, render=True, seed=0):
+    def __init__(self, path, dynamics, task, goal_env=False, hertz=25, render=True, seed=0):
 
         logger.debug('seed: %s' % seed)
         tf.set_random_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
         self.goal_env = goal_env
+        self.task = task
 
         self.path = path
         model = load_model_from_path(path)
@@ -179,32 +180,34 @@ class YuMi(gym.GoalEnv):
         self.model.body_pos[goal_id] = pos
         '''
 
-        start, end = self.model.get_joint_qpos_addr('target')
-        qpos = self.data.qpos[start:end]
-        qpos[0:2] += np.random.uniform(-0.02, 0.02, size=(2,))
+        self.sim.forward()
+        target_start, target_end = self.model.get_joint_qpos_addr('target')
+        target_qpos = self.data.qpos[target_start:target_end]
 
-        quat = qpos[3:]
-        euler = rotations.quat2euler(quat)
-        euler[1] += np.random.uniform(-0.1, 0.1)
-        #euler[2] += np.random.uniform(-0.1, 0.1)
-        qpos[3:] = rotations.euler2quat(euler)
+        target_quat = target_qpos[3:]
 
-        #task = 0
-        #if task == 1:
-        #    euler[:] += 1.5708
-        #elif task == 2:
-        #    euler[0] += 1.5708
+        #euler[2] += np.random.uniform(-0.4, 0.4)
 
+        if self.task == 0:
+            # rotate y=-90 deg
+            quat = rotations.euler2quat(np.array([0, -np.pi/2, 0]))
 
-        #self.sim.forward()
-        #id = self.model.body_name2id('goal')
-        #target_id = self.model.body_name2id('target')
-        #pos = self.model.body_pos[id]
-        #pos[2] = self.model.body_pos[target_id][-1]
-        #self.model.body_pos[id] = pos
+            target_id = self.model.geom_name2id('target')
+            x = self.model.geom_size[target_id][0]
+            target_qpos[2] = 0.051 + x
 
-        #qpos[3:] = euler2quat(euler)
+            goal_id = self.model.body_name2id('goal')
+            body_pos = self.model.body_pos[goal_id]
+            body_quat = self.model.body_quat[goal_id]
+            body_pos[2] = target_qpos[2]
+            body_quat[:] = quat
 
+            perturbation = np.array([np.random.uniform(-0.2, 0.2), 0, 0])
+            euler = rotations.quat2euler(quat)
+            euler = rotations.subtract_euler(euler, perturbation)
+            target_qpos[3:] = rotations.euler2quat(euler)
+        elif self.task == 1:
+            euler[0] += 1.5708
 
     def quat2mat(self, quat):
         result = np.empty(9, dtype=np.double)
@@ -380,7 +383,8 @@ class YuMi(gym.GoalEnv):
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         pos_reward, _ = self.get_pos_reward(pos_distance)
-        reward = pos_reward - 0.1*ang_distance
+        rate = 0.8
+        reward = rate*pos_reward - (1-rate)*ang_distance
         return reward
 
     def get_pos_reward(self, distance, close=0.035, margin=0.15):
