@@ -12,8 +12,9 @@ from yumi import *
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('model_path', help='name of model')
-parser.add_argument('--xml-path', help='path to model xml', default='./models/cheezit_0.xml')
+parser.add_argument('--xml-path', help='path to model xml', default='./models/cheezit.xml')
 parser.add_argument('--render', help='render', default=False, action='store_true')
+parser.add_argument('--task', help='the task to perform', default=0, type=int)
 
 args = parser.parse_args()
 
@@ -52,7 +53,7 @@ def dynamics_generator(seed):
 
 def make_env(render, i, seed=0):
     def create_yumi():
-        return YuMi(path=path, render=render, seed=seed, dynamics=dynamics_generator(seed))
+        return YuMi(path=path, task=args.task, render=render, seed=seed, dynamics=dynamics_generator(seed))
 
     return create_yumi
 
@@ -62,7 +63,7 @@ env = SubprocVecEnv(yumis)
 
 model = PPO2.load(args.model_path, env=env, policy=MlpPolicy)
 
-n_episodes = 300 if real else 100
+n_episodes = 100 if real else 100
 observations = []
 
 obs = env.reset()
@@ -80,9 +81,10 @@ for ep in range(n_episodes):
             l[i].extend([action[i], obs[i]])
             l[i].append(dynamics[i])
         observations.extend([np.array(x) for x in l])
+    print(obs)
 
 if real:
-    filename = 'data/yumi/real_yumi_ppo_{}_friction{}_com{}.npz'.format(n_episodes, str(params[0]), str(params[1]))
+    filename = 'data/yumi/real_yumi_ppo2.npz'.format(n_episodes, str(params[0]), str(params[1]))
 else:
     filename = 'data/yumi/fake_yumi_ppo_{}_friction_{}_com{}.npz'.format(n_episodes, str(params[0]), str(params[1]))
 

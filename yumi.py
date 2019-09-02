@@ -186,8 +186,6 @@ class YuMi(gym.GoalEnv):
 
         target_quat = target_qpos[3:]
 
-        #euler[2] += np.random.uniform(-0.4, 0.4)
-
         if self.task == 0:
             # rotate y=-90 deg
             quat = rotations.euler2quat(np.array([0, -np.pi/2, 0]))
@@ -207,7 +205,7 @@ class YuMi(gym.GoalEnv):
             euler = rotations.subtract_euler(euler, perturbation)
             target_qpos[3:] = rotations.euler2quat(euler)
         elif self.task == 1:
-            euler[0] += 1.5708
+            pass
 
     def quat2mat(self, quat):
         result = np.empty(9, dtype=np.double)
