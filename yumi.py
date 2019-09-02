@@ -43,7 +43,6 @@ class YuMi(gym.GoalEnv):
             self.joint_idx.append(model.joint_name2id(name))
 
         print('joint idx: ', self.joint_idx)
-        self.actions = []
         self.joint_states_pos = None
         self.joint_states_vel = None
         self.target_hist = deque(maxlen=2)
@@ -146,11 +145,6 @@ class YuMi(gym.GoalEnv):
         
 
     def reset(self):
-
-        if len(self.actions):
-            with open('yumi_action.npz', 'wb') as f:
-                np.save(f, self.actions)
-        
 
         self.steps = 0
         self.joint_states_pos = None
@@ -330,8 +324,6 @@ class YuMi(gym.GoalEnv):
         terminal = self.bad_collision()
 
         obs = self.get_observations()
-
-        self.actions.append([action, obs])
 
         if self.joint_states_pos[0] > 1.5:
             action[0] = min(action[0], 0)
