@@ -193,7 +193,6 @@ class YuMi(gym.GoalEnv):
         elif self.task == 1:
             # rotate x=90 deg
             quat = rotations.euler2quat(np.array([np.pi/2, 0, 0]))
-            print('quat:', quat)
             z_idx = 1
         else:
             raise Exception('Additional tasks not implemented.')
