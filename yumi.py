@@ -10,10 +10,10 @@ import gym
 from gym import spaces
 import tensorflow as tf
 import logging
-from utils import *
+from rotations import *
 
 logger = logging.getLogger('YuMi')
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 np.set_printoptions(precision=7, suppress=True)
 MAX_TIME = 4.0 
@@ -43,6 +43,7 @@ class YuMi(gym.GoalEnv):
             self.joint_idx.append(model.joint_name2id(name))
 
         print('joint idx: ', self.joint_idx)
+        self.actions = []
         self.joint_states_pos = None
         self.joint_states_vel = None
         self.target_hist = deque(maxlen=2)
@@ -86,8 +87,8 @@ class YuMi(gym.GoalEnv):
     def observation_space(self):
         d = spaces.Dict({
             'observation': spaces.Box(low=-np.inf, high=np.inf, shape=(94,), dtype=np.float32),
-            'desired_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
-            'achieved_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32)
+            'desired_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32),
+            'achieved_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
             })
         if self.goal_env:
             return d
@@ -146,6 +147,11 @@ class YuMi(gym.GoalEnv):
 
     def reset(self):
 
+        if len(self.actions):
+            with open('yumi_action.npz', 'wb') as f:
+                np.save(f, self.actions)
+        
+
         self.steps = 0
         self.joint_states_pos = None
         self.joint_states_vel = None
@@ -162,7 +168,7 @@ class YuMi(gym.GoalEnv):
         self.sim.forward()
 
         obs = self.get_observations()
-        print('Reset returning: ', obs)
+        logging.debug('Reset returning: ', obs)
         return obs
 
     def set_initial_pose(self):
@@ -273,10 +279,8 @@ class YuMi(gym.GoalEnv):
         mat = data.get_site_xmat(name)
         mat = mat.reshape(-1)
 
-        desired_goal = self.data.get_site_xpos('site:goal')
-        achieved_goal = self.data.get_site_xpos('site:target')
-        observations['desired_goal'] = desired_goal 
-        observations['achieved_goal'] = achieved_goal
+        observations['desired_goal'] = self.get_desired_goal()
+        observations['achieved_goal'] = self.get_achieved_goal()
 
         while len(self.target_hist) < self.target_hist.maxlen:
             self.target_hist.append(np.hstack([pos, mat]))
@@ -327,6 +331,8 @@ class YuMi(gym.GoalEnv):
 
         obs = self.get_observations()
 
+        self.actions.append([action, obs])
+
         if self.joint_states_pos[0] > 1.5:
             action[0] = min(action[0], 0)
         if self.joint_states_pos[1] < -1.5:
@@ -346,15 +352,14 @@ class YuMi(gym.GoalEnv):
 
             stop_early = self.simstep()
 
-            desired_goal = self.data.get_site_xpos('site:goal')
-            achieved_goal = self.data.get_site_xpos('site:target')
-            reward = self.compute_reward(achieved_goal, desired_goal, {})
+            reward = self.compute_reward(self.get_achieved_goal(), self.get_desired_goal(), {})
             completed = reward == 1.0
 
             names = ['left_gripper_base', 'right_gripper_base']
             for name in names:
                 pos = self.data.get_body_xpos(name)
-                gripper_distance = self.get_distance(achieved_goal, pos)
+                target_pos = self.data.get_body_xpos('target')
+                gripper_distance = self.get_distance(target_pos, pos)
                 target_id = self.model.geom_name2id('target')
                 radius = max(self.model.geom_size[target_id])
 
@@ -378,11 +383,16 @@ class YuMi(gym.GoalEnv):
         return np.linalg.norm(a - b, axis=-1)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        distance = self.get_distance(achieved_goal, desired_goal)
-        reward, _ = self.get_reward(distance)
+        pos1, pos2 = achieved_goal[:3], desired_goal[:3]
+        pos_distance = self.get_distance(achieved_goal, desired_goal)
+        euler1, euler2 = achieved_goal[3:], desired_goal[3:]
+        ang_distance = np.linalg.norm(subtract_euler(euler1, euler2), axis=-1)
+        distance = pos_distance + ang_distance
+        reward, _ = self.get_pos_reward(pos_distance)
+        reward -= ang_distance
         return reward
 
-    def get_reward(self, distance, close=0.035, margin=0.15):
+    def get_pos_reward(self, distance, close=0.035, margin=0.15):
         # sigmoidal gaussian
         reward = 0 
         completed = distance < close
@@ -474,6 +484,17 @@ class YuMi(gym.GoalEnv):
         #model.body_pos[bodyid][0] = com
 
         return dynamics
+
+    def get_desired_goal(self):
+        return self.get_site_pose('site:goal')
+
+    def get_achieved_goal(self):
+        return self.get_site_pose('site:target')
+
+    def get_site_pose(self, site):
+        xpos = self.data.get_site_xpos(site)
+        euler = mat2euler(self.data.get_site_xmat(site))
+        return np.hstack([xpos, euler])
 
     def screenshot(self, image_path='image.png'):
         import imageio

@@ -14,16 +14,16 @@
         <!-- table is at 0.051 -->
         <body name="target" pos="0.5 0.15 0.156" euler="1.57 0 0 ">
             <joint type="free" limited="false" name="target" armature="0" damping="0"/>
-            <geom name="target" type="box" size="0.079 0.105 0.03" mass="0.054" rgba="1 0.663 0.71 .4" />
+            <geom name="target" type="box" size="0.079 0.105 0.03" mass="0.054" rgba="1 0.663 0.71 .9" />
 			<!--body name="insidebox" pos="0.3 0 0" >
 				<geom name="insidebox" type="box" material="marble" contype="2" conaffinity="2" size="0.03 0.03 0.03" rgba="0.8 0.6 0.6 0." mass="1" />
 			</body-->
-            <site name="site:target" size="0.005" pos="0 0 0.03" rgba="0.965 0.784 0 1"/>
+            <site name="site:target" size="0.005" pos="0 0.105 0" rgba="0.965 0.784 0 1"/>
         </body>
 
-        <body name="goal" pos="0.5 0.0 0.156" euler="0 0 0">
-            <site name="site:goal" size="0.035" pos="0 0 0" rgba="0.259 0.682 0.2 0.1"/>
-            <site name="site:goal-complete" size="0.005" pos="0 0 0" rgba="0.259 .682 0.2 0.2"/>
+        <body name="goal" pos="0.5 0.0 0.156" euler="1.57 0 0">
+            <!--site name="site:goal" size="0.035" pos="0 0 0" rgba="0.259 0.682 0.2 0.1"/-->
+            <site name="site:goal" type="box" size="0.079 0.105 0.03" pos="0 0 0" rgba="0.259 0.682 0.2 0.1"/>
         </body>
 
     </worldbody>
