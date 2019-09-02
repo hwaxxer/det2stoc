@@ -10,7 +10,7 @@ import gym
 from gym import spaces
 import tensorflow as tf
 import logging
-from rotations import *
+from gym.envs.robotics import rotations
 
 logger = logging.getLogger('YuMi')
 logger.setLevel(logging.INFO)
@@ -184,10 +184,10 @@ class YuMi(gym.GoalEnv):
         qpos[0:2] += np.random.uniform(-0.02, 0.02, size=(2,))
 
         quat = qpos[3:]
-        euler = quat2euler(quat)
+        euler = rotations.quat2euler(quat)
         euler[1] += np.random.uniform(-0.1, 0.1)
         #euler[2] += np.random.uniform(-0.1, 0.1)
-        qpos[3:] = euler2quat(euler)
+        qpos[3:] = rotations.euler2quat(euler)
 
         #task = 0
         #if task == 1:
@@ -378,10 +378,9 @@ class YuMi(gym.GoalEnv):
         pos1, pos2 = achieved_goal[:3], desired_goal[:3]
         pos_distance = self.get_distance(achieved_goal, desired_goal)
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
-        ang_distance = np.linalg.norm(subtract_euler(euler1, euler2), axis=-1)
-        distance = pos_distance + ang_distance
-        reward, _ = self.get_pos_reward(pos_distance)
-        reward -= ang_distance
+        ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
+        pos_reward, _ = self.get_pos_reward(pos_distance)
+        reward = pos_reward - 0.1*ang_distance
         return reward
 
     def get_pos_reward(self, distance, close=0.035, margin=0.15):
@@ -485,7 +484,7 @@ class YuMi(gym.GoalEnv):
 
     def get_site_pose(self, site):
         xpos = self.data.get_site_xpos(site)
-        euler = mat2euler(self.data.get_site_xmat(site))
+        euler = rotations.mat2euler(self.data.get_site_xmat(site))
         return np.hstack([xpos, euler])
 
     def screenshot(self, image_path='image.png'):
