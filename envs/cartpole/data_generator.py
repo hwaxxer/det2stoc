@@ -21,8 +21,9 @@ def generate(parameter_distribution, num_episodes, env_update_fn, filepath=None,
     env_name = 'CartPole-v1'
     model_dir = os.path.join(os.getcwd(), 'models')
     model_path = os.path.join(model_dir, 'ppo2_' + env_name + '.pkl')
-    if not os.path.exists(model_dir):
-        os.mkdir(model_dir)
+
+    os.makedirs(model_dir, exist_ok=True)
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
     def make_env(env_name):
         env = gym.make(env_name)
