@@ -16,8 +16,7 @@ logger = logging.getLogger('YuMi')
 logger.setLevel(logging.INFO)
 
 np.set_printoptions(precision=7, suppress=True)
-MAX_TIME = 4.0 
-STEPS_PER_RENDER = 10
+MAX_TIME = 6.0 
 VELOCITY_CONTROLLER = True
 
 class YuMi(gym.GoalEnv):
@@ -77,7 +76,10 @@ class YuMi(gym.GoalEnv):
 
     @property
     def horizon(self):
-        return self.hertz * MAX_TIME
+        return int(self.hertz * MAX_TIME)
+
+    def get_horizon(self):
+        return self.horizon
 
     @property
     def action_space(self):
@@ -121,10 +123,6 @@ class YuMi(gym.GoalEnv):
         model = state.model
         nu = model.nu
         data = state.data
-
-        dt = model.opt.timestep
-        if self.sim.nsubsteps == self.steps_per_action:
-            dt *= self.steps_per_action
 
         dt = 1/self.hertz
 
@@ -347,10 +345,11 @@ class YuMi(gym.GoalEnv):
 
         if self.joint_states_pos[2] > 0.3:
             action[2] = min(action[2], 0)
-        if self.joint_states_pos[3] > 0.3:
-            action[3] = min(action[3], 0)
         if self.joint_states_pos[2] < -0.3:
             action[2] = max(action[2], 0)
+
+        if self.joint_states_pos[3] > 0.3:
+            action[3] = min(action[3], 0)
         if self.joint_states_pos[3] < -0.3:
             action[3] = max(action[3], 0)
 
@@ -368,10 +367,11 @@ class YuMi(gym.GoalEnv):
                 target_pos = self.data.get_body_xpos('target')
                 gripper_distance = self.get_distance(target_pos, pos)
                 target_id = self.model.geom_name2id('target')
-                radius = max(self.model.geom_size[target_id])
+                radius = max(self.model.geom_size[target_id]) + 0.1 # Add a decimeter
 
                 penalty = max(0, gripper_distance - radius)
-                reward -= 0.1*penalty
+                reward -= 0.01*penalty
+                logger.debug('%s penalty: %f' % (name, penalty))
                 
             reward -= action_penalty
             terminal = self.steps == self.horizon
@@ -395,11 +395,12 @@ class YuMi(gym.GoalEnv):
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         pos_reward, _ = self.get_pos_reward(pos_distance)
-        rate = 0.8
-        reward = rate*pos_reward - (1-rate)*ang_distance
+        distance_ratio = 0.05
+        reward = pos_reward - distance_ratio*ang_distance
+        logger.debug('Pos reward: %f, ang_distance: %f' % (pos_reward, distance_ratio*ang_distance))
         return reward
 
-    def get_pos_reward(self, distance, close=0.035, margin=0.15):
+    def get_pos_reward(self, distance, close=0.001, margin=0.15):
         # sigmoidal gaussian
         reward = 0 
         completed = distance < close
@@ -464,7 +465,7 @@ class YuMi(gym.GoalEnv):
             body2_cfrc = sim.data.cfrc_ext[bodyid2]
             body2_contact_force_norm = np.sqrt(np.sum(np.square(body2_cfrc)))
 
-            max_cfrc = 20 # Arbitrary limit 
+            max_cfrc = 100 # Arbitrary limit 
             if max_cfrc < body1_contact_force_norm or max_cfrc < body2_contact_force_norm:
                 bad_collision = True
                 print('Contact force on: ', bodyname1, ': ', body1_contact_force_norm)

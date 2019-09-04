@@ -58,21 +58,22 @@ def make_env(render, i, seed=0):
     return create_yumi
 
 yumis = [make_env(args.render, i, seed=i) for i in range(n_cpu)]
-env = SubprocVecEnv(yumis)
-#env = DummyVecEnv(yumis)
+env = DummyVecEnv(yumis)
 
 model = PPO2.load(args.model_path, env=env, policy=MlpPolicy)
 
-n_episodes = 100 if real else 100
+n_episodes = 20 if real else 100
 observations = []
+
+horizon = env.env_method('get_horizon')[0]
 
 obs = env.reset()
 for ep in range(n_episodes):
-    for step in range(100):
+    for step in range(horizon):
         l = [[] for _ in range(n_cpu)]
         for i in range(n_cpu):
             l[i].append(obs[i])
-        action, _states = model.predict(obs, deterministic=False)
+        action, _states = model.predict(obs, deterministic=True)
         dynamics = env.env_method('get_dynamics')
         #if ep == 0 and step == 1:
         #    dynamics = env.env_method('screenshot')

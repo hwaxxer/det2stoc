@@ -59,13 +59,14 @@ env = DummyVecEnv(yumis)
 
 model = HER.load(args.model_path, env=env)
 
+horizon = env.env_method('get_horizon')[0]
 n_episodes = 300 if real else 100
 observations = []
 
 obs = env.reset()
 for ep in range(n_episodes):
     l = []
-    for _ in range(100):
+    for _ in range(horizon):
         l.append(obs)
         action, _states = model.predict(obs, deterministic=True)
         dynamics = env.env_method('get_dynamics')
