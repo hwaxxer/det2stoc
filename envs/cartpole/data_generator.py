@@ -39,8 +39,6 @@ def generate(parameter_distribution, num_episodes, env_update_fn, filepath=None,
 
     obs = env.reset()
 
-    ep_lengths = np.array([0 for _ in range(n_cpu)])
-
     env = make_env(env_name)
 
     states, actions, next_states, parameters, steps = [], [], [], [], []
@@ -60,13 +58,14 @@ def generate(parameter_distribution, num_episodes, env_update_fn, filepath=None,
             next_states.append(obs)
             parameters.append(params)
             steps.append(step)
-
+            step += 1
 
     data = { 
             'states': np.array(states),
             'actions': np.array(actions),
             'next_states': np.array(next_states),
-            'parameters': np.array(parameters)
+            'parameters': np.array(parameters),
+            'steps': np.array(steps)
             }
     if filepath:
         print('filepath: ', filepath)
@@ -74,19 +73,3 @@ def generate(parameter_distribution, num_episodes, env_update_fn, filepath=None,
             np.save(filepath, data)
 
     return data
-
-if __name__ == '__main__':
-
-    data_dir = 'data'
-    model_dir = 'model'
-    for p in [data_dir, model_dir]:
-        if not os.path.exists(p):
-            os.mkdir(p)
-
-    masspole_dist = lambda: np.random.uniform(0.1, 2.0)
-    length_dist = lambda: np.random.uniform(0.5, 4.0)
-
-    parameter_dist = lambda: (masspole_dist(), length_dist())
-
-    num_episodes = 10
-    generate(model_dir, parameter_dist, num_episodes)
