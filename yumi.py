@@ -13,7 +13,6 @@ import logging
 from gym.envs.robotics import rotations
 
 logger = logging.getLogger('YuMi')
-logger.setLevel(logging.INFO)
 
 np.set_printoptions(precision=7, suppress=True)
 MAX_TIME = 6.0 
@@ -23,8 +22,8 @@ class YuMi(gym.GoalEnv):
 
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, path, dynamics, task, goal_env=False, hertz=25, render=True, seed=0):
-
+    def __init__(self, path, dynamics, task, goal_env=False, hertz=25, render=True, seed=0, logging_level=logging.INFO):
+        logger.setLevel(logging_level)
         logger.debug('seed: %s' % seed)
         tf.set_random_seed(seed)
         np.random.seed(seed)
@@ -326,7 +325,7 @@ class YuMi(gym.GoalEnv):
         action += self.joint_states_vel
 
         # Perturbate action
-        action += np.random.normal(0, 0.001, size=len(action))
+        #action += np.random.normal(0, 0.001, size=len(action))
 
         # MAX_TIME seconds
         self.steps += 1
@@ -334,24 +333,45 @@ class YuMi(gym.GoalEnv):
         completed = terminal = False
 
         # Check for early termination
-        terminal = self.bad_collision()
+        terminal, force_penalty = self.bad_collision()
 
         obs = self.get_observations()
 
-        if self.joint_states_pos[0] > 1.5:
-            action[0] = min(action[0], 0)
-        if self.joint_states_pos[1] < -1.5:
+        idx = 0
+        if self.joint_states_pos[idx] > 1.2:
+            action[0] = min(action[idx], 0)
+        elif self.joint_states_pos[0] < 0.8:
             action[0] = max(action[0], 0)
 
-        if self.joint_states_pos[2] > 0.3:
-            action[2] = min(action[2], 0)
-        if self.joint_states_pos[2] < -0.3:
-            action[2] = max(action[2], 0)
+        idx = 1
+        if self.joint_states_pos[idx] < -1.2:
+            action[idx] = max(action[idx], 0)
+        elif self.joint_states_pos[idx] > -0.8:
+            action[idx] = min(action[idx], 0)
 
-        if self.joint_states_pos[3] > 0.3:
-            action[3] = min(action[3], 0)
-        if self.joint_states_pos[3] < -0.3:
-            action[3] = max(action[3], 0)
+        idx = 2
+        if self.joint_states_pos[idx] > 0.3:
+            action[idx] = min(action[idx], 0)
+        if self.joint_states_pos[idx] < -0.3:
+            action[idx] = max(action[idx], 0)
+
+        idx = 3
+        if self.joint_states_pos[idx] > 0.3:
+            action[idx] = min(action[idx], 0)
+        if self.joint_states_pos[idx] < -0.3:
+            action[idx] = max(action[idx], 0)
+
+        idx = -2
+        if self.joint_states_pos[idx] > 0.2:
+            action[idx] = min(action[idx], 0)
+        elif self.joint_states_pos[idx] < -0.45:
+            action[idx] = max(action[idx], 0)
+
+        idx = -1
+        if self.joint_states_pos[idx] < -0.2:
+            action[idx] = max(action[idx], 0)
+        elif self.joint_states_pos[idx] > 0.45:
+            action[idx] = min(action[idx], 0)
 
         if not terminal:
             self.data.userdata[:] = action
@@ -374,6 +394,8 @@ class YuMi(gym.GoalEnv):
                 logger.debug('%s penalty: %f' % (name, penalty))
                 
             reward -= action_penalty
+            reward -= force_penalty
+            logger.debug('force penalty: %f' % force_penalty)
             terminal = self.steps == self.horizon
         else: 
             reward = -10
@@ -428,6 +450,8 @@ class YuMi(gym.GoalEnv):
 
     def bad_collision(self):
         bad_collision = False
+        force_penalty = 0
+
         for i in range(self.data.ncon):
             contact = self.data.contact[i]
             geom1 = contact.geom1
@@ -465,14 +489,11 @@ class YuMi(gym.GoalEnv):
             body2_cfrc = sim.data.cfrc_ext[bodyid2]
             body2_contact_force_norm = np.sqrt(np.sum(np.square(body2_cfrc)))
 
-            max_cfrc = 100 # Arbitrary limit 
-            if max_cfrc < body1_contact_force_norm or max_cfrc < body2_contact_force_norm:
-                bad_collision = True
-                print('Contact force on: ', bodyname1, ': ', body1_contact_force_norm)
-                print('Contact force on: ', bodyname2, ': ', body2_contact_force_norm)
-                break
+            force_penalty = 0.1*np.log(1 + body1_contact_force_norm)
+            force_penalty += 0.1*np.log(1 + body2_contact_force_norm)
+            force_penalty = 0
 
-        return bad_collision
+        return bad_collision, force_penalty
 
     def get_dynamics(self):
         return [self.friction, self.com]
