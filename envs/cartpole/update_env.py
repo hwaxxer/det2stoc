@@ -1,5 +1,5 @@
 def update_env(env, params):
-    masspole, length = params
+    length, masspole = params
     env.masspole = masspole
     env.total_mass = (masspole + env.masscart)
     env.length = length
