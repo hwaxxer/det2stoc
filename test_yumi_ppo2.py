@@ -15,6 +15,7 @@ parser.add_argument('model_path', help='name of model')
 parser.add_argument('--xml-path', help='path to model xml', default='./models/cheezit.xml')
 parser.add_argument('--render', help='render', default=False, action='store_true')
 parser.add_argument('--task', help='the task to perform', default=0, type=int)
+parser.add_argument('--debug', help='debug or not', default=False, type=bool)
 
 args = parser.parse_args()
 
@@ -53,7 +54,8 @@ def dynamics_generator(seed):
 
 def make_env(render, i, seed=0):
     def create_yumi():
-        return YuMi(path=path, task=args.task, render=render, seed=seed, dynamics=dynamics_generator(seed), logging_level=logging.DEBUG)
+        logging_level = logging.DEBUG if args.debug else logging.INFO
+        return YuMi(path=path, task=args.task, render=render, seed=seed, dynamics=dynamics_generator(seed), logging_level=logging_level)
 
     return create_yumi
 
@@ -86,7 +88,7 @@ for ep in range(n_episodes):
     print(obs)
 
 if real:
-    filename = 'data/yumi/real_yumi_ppo2.npz'.format(n_episodes, str(params[0]), str(params[1]))
+    filename = 'data/yumi/real_yumi_ppo2.npz'
 else:
     filename = 'data/yumi/fake_yumi_ppo_{}_friction_{}_com{}.npz'.format(n_episodes, str(params[0]), str(params[1]))
 
