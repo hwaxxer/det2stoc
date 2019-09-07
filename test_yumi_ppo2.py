@@ -53,7 +53,7 @@ def dynamics_generator(seed):
 
 def make_env(render, i, seed=0):
     def create_yumi():
-        return YuMi(path=path, task=args.task, render=render, seed=seed, dynamics=dynamics_generator(seed))
+        return YuMi(path=path, task=args.task, render=render, seed=seed, dynamics=dynamics_generator(seed), logging_level=logging.DEBUG)
 
     return create_yumi
 
@@ -62,7 +62,7 @@ env = DummyVecEnv(yumis)
 
 model = PPO2.load(args.model_path, env=env, policy=MlpPolicy)
 
-n_episodes = 20 if real else 100
+n_episodes = 10 if real else 100
 observations = []
 
 horizon = env.env_method('get_horizon')[0]
@@ -74,6 +74,7 @@ for ep in range(n_episodes):
         for i in range(n_cpu):
             l[i].append(obs[i])
         action, _states = model.predict(obs, deterministic=True)
+
         dynamics = env.env_method('get_dynamics')
         #if ep == 0 and step == 1:
         #    dynamics = env.env_method('screenshot')

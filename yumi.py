@@ -11,12 +11,13 @@ from gym import spaces
 import tensorflow as tf
 import logging
 from gym.envs.robotics import rotations
+from pid import PID
 
 logger = logging.getLogger('YuMi')
 
 np.set_printoptions(precision=7, suppress=True)
 MAX_TIME = 6.0 
-VELOCITY_CONTROLLER = True
+VELOCITY_CONTROLLER = False
 
 class YuMi(gym.GoalEnv):
 
@@ -116,7 +117,7 @@ class YuMi(gym.GoalEnv):
         return terminal
 
     def callback(self, state):
-        if self.joint_states_vel is None:
+        if self.joint_states_pos is None:
             return
 
         model = state.model
@@ -132,11 +133,13 @@ class YuMi(gym.GoalEnv):
             data.qacc[self.joint_idx] = ctrl * 1.0 / dt
         else:
             action = np.empty(model.nu)
-            action[:] = data.userdata[:nu]
+            for i in range(len(self.joint_idx)):
+                pid = self.pids[i]
+                qpos = self.joint_states_pos[i]
+                action[i] = pid(qpos, data.time)
             res = action
-            res -= data.qvel[:nu] * dt
-            data.qacc[:nu] = (2.0 / dt**2) * res
-            #data.qacc[:nu] = np.clip(data.qacc[:nu], -10., 10.)
+            res -= self.joint_states_vel * dt
+            data.qacc[self.joint_idx] = (2.0 / dt**2) * res
 
         functions.mj_inverse(model, data)
         data.qfrc_applied[self.joint_idx] = data.qfrc_inverse[self.joint_idx]
@@ -149,6 +152,12 @@ class YuMi(gym.GoalEnv):
         self.joint_states_vel = None
         self.data.qacc[:] = 0
         self.data.qvel[:] = 0
+
+        self.pids = []
+        for i in range(self.model.nu):
+            pid = PID(Kp=1.0, Kd=0.001, sample_time=0)
+            pid.output_limits = (self.action_space.low[i], self.action_space.high[i])
+            self.pids.append(pid)
 
         #model = load_model_from_path(self.path)
         self.randomize_dynamics(self.model)
@@ -238,7 +247,6 @@ class YuMi(gym.GoalEnv):
 
         pos = []
         vel = []
-        qacc = []
 
         model = self.model
         data = self.data
@@ -252,15 +260,13 @@ class YuMi(gym.GoalEnv):
         for i, joint in enumerate(self.joint_idx):
             pos.append(data.qpos[joint])
             vel.append(data.qvel[joint])
-            qacc.append(data.qacc[joint])
             name = model.joint_names[joint]
             assert model.get_joint_qpos_addr(name) == joint
         obs.extend(pos)
         obs.extend(vel)
 
-        self.joint_states_pos = np.array(pos)
-        self.joint_states_vel = np.array(vel)
-        self.qacc = qacc
+        self.joint_states_pos = np.array(pos) + np.random.normal(0, 0.01, size=len(pos))
+        self.joint_states_vel = np.array(vel) + np.random.normal(0, 0.01, size=len(vel))
 
         name = 'site:goal'
         pos = data.get_site_xpos(name)
@@ -317,15 +323,11 @@ class YuMi(gym.GoalEnv):
 
     def step(self, action):
 
-        action_penalty = 0.001*np.linalg.norm(action)
+        obs = self.get_observations()
+
         # Eventhough limits are specified in action_space, they 
         # are not honored by baselines so we clip them
-
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        action += self.joint_states_vel
-
-        # Perturbate action
-        #action += np.random.normal(0, 0.001, size=len(action))
 
         # MAX_TIME seconds
         self.steps += 1
@@ -335,7 +337,6 @@ class YuMi(gym.GoalEnv):
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
 
-        obs = self.get_observations()
 
         idx = 0
         if self.joint_states_pos[idx] > 1.2:
@@ -361,6 +362,18 @@ class YuMi(gym.GoalEnv):
         if self.joint_states_pos[idx] < -0.3:
             action[idx] = max(action[idx], 0)
 
+        idx = 4
+        if self.joint_states_pos[idx] > 0.3:
+            action[idx] = min(action[idx], 0)
+        if self.joint_states_pos[idx] < -0.3:
+            action[idx] = max(action[idx], 0)
+
+        idx = 5
+        if self.joint_states_pos[idx] > 0.3:
+            action[idx] = min(action[idx], 0)
+        if self.joint_states_pos[idx] < -0.3:
+            action[idx] = max(action[idx], 0)
+
         idx = -2
         if self.joint_states_pos[idx] > 0.2:
             action[idx] = min(action[idx], 0)
@@ -372,6 +385,19 @@ class YuMi(gym.GoalEnv):
             action[idx] = max(action[idx], 0)
         elif self.joint_states_pos[idx] > 0.45:
             action[idx] = min(action[idx], 0)
+
+        if VELOCITY_CONTROLLER:
+            action += self.joint_states_vel
+        else:
+            action += self.joint_states_pos
+
+        for i,a in enumerate(action):
+            pid = self.pids[i]
+            pid.setpoint = a
+
+        # Perturbate action
+        #action += np.random.normal(0, 0.001, size=len(action))
+
 
         if not terminal:
             self.data.userdata[:] = action
@@ -393,8 +419,8 @@ class YuMi(gym.GoalEnv):
                 reward -= 0.01*penalty
                 logger.debug('%s penalty: %f' % (name, penalty))
                 
-            reward -= action_penalty
-            reward -= force_penalty
+            reward -= 0.01 * np.linalg.norm(self.joint_states_vel)
+            #reward -= force_penalty
             logger.debug('force penalty: %f' % force_penalty)
             terminal = self.steps == self.horizon
         else: 
@@ -403,8 +429,6 @@ class YuMi(gym.GoalEnv):
         if self.steps % self.hertz == 0:
             print('Step: {}, reward: {}, completed: {}'.format( 
                 self.steps, reward, completed))
-            if completed:
-                print('************ GOAL ACHIEVED ************')
 
         return obs, reward, terminal, {}
 
@@ -416,16 +440,15 @@ class YuMi(gym.GoalEnv):
         pos_distance = self.get_distance(achieved_goal, desired_goal)
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
-        pos_reward, _ = self.get_pos_reward(pos_distance)
+        pos_reward = self.get_pos_reward(pos_distance)
         distance_ratio = 0.05
         reward = pos_reward - distance_ratio*ang_distance
         logger.debug('Pos reward: %f, ang_distance: %f' % (pos_reward, distance_ratio*ang_distance))
         return reward
 
-    def get_pos_reward(self, distance, close=0.001, margin=0.15):
+    def get_pos_reward(self, distance, close=0.01, margin=0.15):
         # sigmoidal gaussian
         reward = 0 
-        completed = distance < close
         
         if distance < close:
             reward = 1.0
@@ -433,7 +456,7 @@ class YuMi(gym.GoalEnv):
             scaled_distance = distance / margin;
             scale = np.sqrt(-2 * np.log(margin))
             reward += np.exp(-0.5 * (scale*scaled_distance)**2)
-        return reward, completed
+        return reward
 
     def _set_joint_limits(self):
         xml_str = self.model.get_xml()
@@ -468,30 +491,26 @@ class YuMi(gym.GoalEnv):
             root_bodyname1 = self.model.body_id2name(rootid1)
             root_bodyname2 = self.model.body_id2name(rootid2)
 
-            is_yumi = 'yumi' in root_bodyname1 or 'yumi' in root_bodyname2
+            is_target = 'target' in bodyname1 or 'target' in bodyname2
             is_table = 'table' in bodyname1 or 'table' in bodyname2
-            is_target= 'target' in bodyname1 or 'target' in bodyname2
 
-            bad_collision = is_yumi and is_table
-            if bad_collision:
-                print('root body is: ', root_bodyname1, root_bodyname2)
-                print('body is: ', bodyname1, bodyname2)
-                break
-
-            if is_table and is_target:
-                # Not interested in this contact force
+            if is_target and is_table:
                 continue
+            elif is_target:
+                sim = self.sim
+                body1_cfrc = sim.data.cfrc_ext[bodyid1]
+                body1_contact_force_norm = np.sqrt(np.sum(np.square(body1_cfrc)))
+                body2_cfrc = sim.data.cfrc_ext[bodyid2]
+                body2_contact_force_norm = np.sqrt(np.sum(np.square(body2_cfrc)))
 
-            sim = self.sim
-
-            body1_cfrc = sim.data.cfrc_ext[bodyid1]
-            body1_contact_force_norm = np.sqrt(np.sum(np.square(body1_cfrc)))
-            body2_cfrc = sim.data.cfrc_ext[bodyid2]
-            body2_contact_force_norm = np.sqrt(np.sum(np.square(body2_cfrc)))
-
-            force_penalty = 0.1*np.log(1 + body1_contact_force_norm)
-            force_penalty += 0.1*np.log(1 + body2_contact_force_norm)
-            force_penalty = 0
+                force_penalty = (0.1*np.log(1 + body1_contact_force_norm) +
+                    0.1*np.log(1 + body2_contact_force_norm))
+            else:
+                bad_collision = True
+                if bad_collision:
+                    print('root body is: ', root_bodyname1, root_bodyname2)
+                    print('body is: ', bodyname1, bodyname2)
+                    break
 
         return bad_collision, force_penalty
 
@@ -500,7 +519,6 @@ class YuMi(gym.GoalEnv):
 
     def randomize_dynamics(self, model):
         dynamics = self.dynamics()
-        print('dyns: ', dynamics)
         friction, com = dynamics
 
         self.friction = friction
