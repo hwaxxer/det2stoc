@@ -213,7 +213,7 @@ class YuMi(gym.GoalEnv):
 
         target_id = self.model.geom_name2id('target')
         target_qpos[0] = 0.5 + np.random.uniform(-0.05, 0.05)
-        target_qpos[1] = np.random.uniform(-0.15, 0.15)
+        target_qpos[1] = np.random.uniform(0.10, 0.15)
         height = self.model.geom_size[target_id][z_idx]
         target_qpos[2] = 0.051 + height
 
@@ -327,18 +327,16 @@ class YuMi(gym.GoalEnv):
 
         obs = self.get_observations()
 
-        # Eventhough limits are specified in action_space, they 
-        # are not honored by baselines so we clip them
-        action = np.clip(action, self.action_space.low, self.action_space.high)
-
         # MAX_TIME seconds
         self.steps += 1
 
         completed = terminal = False
-
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
 
+        # Eventhough limits are specified in action_space, they 
+        # are not honored by baselines so we clip them
+        action = np.clip(action, self.action_space.low, self.action_space.high)
 
         idx = 0
         if self.joint_states_pos[idx] > 1.2:
@@ -381,7 +379,6 @@ class YuMi(gym.GoalEnv):
 
         # Perturbate action
         #action += np.random.normal(0, 0.001, size=len(action))
-
 
         if not terminal:
             self.data.userdata[:] = action

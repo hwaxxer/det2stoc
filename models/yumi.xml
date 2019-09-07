@@ -102,7 +102,7 @@
                                             <inertial pos="0.02173 -0.02341 -0.02059" quat="0.297586 -0.0673761 0.874618 -0.376758" mass="0" diaginertia="0 0 0" />
                                             <body name="left_gripper_base" pos="0 0 0">
                                                 <inertial pos="1.20154e-05 0.00242304 0.0527266" quat="0.706871 0.00701907 -0.0072129 0.707271" mass="0.563549" diaginertia="0.00101254 0.000796983 0.000496939" />
-                                                <geom type="mesh" rgba="0.6 0.6 0.6 1" mesh="smart_gripper_v" />
+                                                <geom name="left_gripper_base" type="mesh" rgba="0.6 0.6 0.6 1" mesh="smart_gripper_v" />
                                             </body>
                                         </body>
                                     </body>
@@ -144,7 +144,7 @@
                                             <inertial pos="0.02173 0.02341 -0.02059" quat="0.297586 0.0673761 0.874618 0.376758" mass="0" diaginertia="0 0 0" />
                                             <body name="right_gripper_base" pos="0 0 0">
                                                 <inertial pos="1.20154e-05 0.00242304 0.0527266" quat="0.706871 0.00701907 -0.0072129 0.707271" mass="0.563549" diaginertia="0.00101254 0.000796983 0.000496939" />
-                                                <geom type="mesh" rgba="0.6 0.6 0.6 1" mesh="smart_gripper_v" />
+                                                <geom name="right_gripper_base" type="mesh" rgba="0.6 0.6 0.6 1" mesh="smart_gripper_v" />
                                             </body>
                                         </body>
                                     </body>
