@@ -212,6 +212,8 @@ class YuMi(gym.GoalEnv):
             raise Exception('Additional tasks not implemented.')
 
         target_id = self.model.geom_name2id('target')
+        target_qpos[0] = 0.5 + np.random.uniform(-0.05, 0.05)
+        target_qpos[1] = np.random.uniform(-0.15, 0.15)
         height = self.model.geom_size[target_id][z_idx]
         target_qpos[2] = 0.051 + height
 
@@ -350,29 +352,11 @@ class YuMi(gym.GoalEnv):
         elif self.joint_states_pos[idx] > -0.8:
             action[idx] = min(action[idx], 0)
 
-        idx = 2
-        if self.joint_states_pos[idx] > 0.3:
-            action[idx] = min(action[idx], 0)
-        if self.joint_states_pos[idx] < -0.3:
-            action[idx] = max(action[idx], 0)
-
-        idx = 3
-        if self.joint_states_pos[idx] > 0.3:
-            action[idx] = min(action[idx], 0)
-        if self.joint_states_pos[idx] < -0.3:
-            action[idx] = max(action[idx], 0)
-
-        idx = 4
-        if self.joint_states_pos[idx] > 0.3:
-            action[idx] = min(action[idx], 0)
-        if self.joint_states_pos[idx] < -0.3:
-            action[idx] = max(action[idx], 0)
-
-        idx = 5
-        if self.joint_states_pos[idx] > 0.3:
-            action[idx] = min(action[idx], 0)
-        if self.joint_states_pos[idx] < -0.3:
-            action[idx] = max(action[idx], 0)
+        for idx in [2,3,4,5]:
+            if self.joint_states_pos[idx] > 0.3:
+                action[idx] = min(action[idx], 0)
+            if self.joint_states_pos[idx] < -0.3:
+                action[idx] = max(action[idx], 0)
 
         idx = -2
         if self.joint_states_pos[idx] > 0.2:
@@ -441,7 +425,7 @@ class YuMi(gym.GoalEnv):
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         pos_reward = self.get_pos_reward(pos_distance)
-        distance_ratio = 0.05
+        distance_ratio = 0.1
         reward = pos_reward - distance_ratio*ang_distance
         logger.debug('Pos reward: %f, ang_distance: %f' % (pos_reward, distance_ratio*ang_distance))
         return reward
