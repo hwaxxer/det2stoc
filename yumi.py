@@ -212,8 +212,8 @@ class YuMi(gym.GoalEnv):
             raise Exception('Additional tasks not implemented.')
 
         target_id = self.model.geom_name2id('target')
-        target_qpos[0] = 0.5 + np.random.uniform(-0.05, 0.05)
-        target_qpos[1] = np.random.uniform(0.13, 0.15)
+        #target_qpos[0] = 0.5 + np.random.uniform(-0.05, 0.05)
+        #target_qpos[1] = np.random.uniform(0.13, 0.15)
         height = self.model.geom_size[target_id][z_idx]
         target_qpos[2] = 0.051 + height
 
