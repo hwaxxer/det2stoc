@@ -330,7 +330,7 @@ class YuMi(gym.GoalEnv):
         # MAX_TIME seconds
         self.steps += 1
 
-        completed = terminal = False
+        terminal = False
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
 
@@ -386,7 +386,7 @@ class YuMi(gym.GoalEnv):
             stop_early = self.simstep()
 
             reward = self.compute_reward(self.get_achieved_goal(), self.get_desired_goal(), {})
-            completed = reward == 1.0
+            reward == 1.0
 
             names = ['left_gripper_base', 'right_gripper_base']
             for name in names:
@@ -408,8 +408,10 @@ class YuMi(gym.GoalEnv):
             reward = -10
 
         if self.steps % self.hertz == 0:
-            print('Step: {}, reward: {}, completed: {}'.format( 
-                self.steps, reward, completed))
+            print('Step: {}, reward: {}'.format(
+                self.steps, reward))
+            if 0.8 < reward and self.steps == self.horizon:
+                print('**** LOOKING GOOD ****')
 
         return obs, reward, terminal, {}
 
