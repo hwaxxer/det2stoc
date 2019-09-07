@@ -1,5 +1,4 @@
 import sys, os
-
 from stable_baselines.common.policies import MlpPolicy, MlpLstmPolicy, MlpLnLstmPolicy
 from stable_baselines.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize
 from stable_baselines.common import set_global_seeds
@@ -46,14 +45,15 @@ def callback(_locals, _globals):
     n_steps += 1
     if n_steps % 500 == 0 or n_steps == 100:
         print('Saving: ', n_steps)
-        model.save('checkpoints/yumi/ppo2/ppo2_{}_task_{}_{}.npy'.format(name, args.task, n_steps))
+        save_path = 'checkpoints/yumi/ppo2/ppo2_{}_task_{}_{}.npy'.format(name, args.task, n_steps)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        model.save(save_path)
 
     return True
 
 
 model = PPO2(MlpPolicy, env, verbose=1, tensorboard_log=log_dir)
 model.learn(total_timesteps=total_timesteps, callback=callback)
-model.save("ppo-yumi-{}-final".format(n_steps))
 
 env.save_running_average(log_dir)
 
