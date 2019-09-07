@@ -351,7 +351,7 @@ class YuMi(gym.GoalEnv):
             action[idx] = min(action[idx], 0)
 
         for idx in [2,3,4,5]:
-            if self.joint_states_pos[idx] > 0.3:
+            if self.joint_states_pos[idx] > 0.4:
                 action[idx] = min(action[idx], 0)
             if self.joint_states_pos[idx] < -0.3:
                 action[idx] = max(action[idx], 0)
