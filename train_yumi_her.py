@@ -42,7 +42,7 @@ def callback(_locals, _globals):
     n_steps += 1
     if n_steps % 50000 == 0 or n_steps == 10000:
         print('Saving: ', n_steps)
-        save_path = 'checkpoints/yumi/her/her_{}_task_{}_{}.npy'.format(name, args.task, n_steps)) 
+        save_path = 'checkpoints/yumi/her/her_{}_task_{}_{}.npy'.format(name, args.task, n_steps)
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         model.save(save_path)
 
