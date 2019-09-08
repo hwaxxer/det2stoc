@@ -1,0 +1,56 @@
+<mujoco model="slope">
+    <compiler angle="degree" />
+    <visual>
+        <!--scn flags="5"/-->
+        <quality shadowsize="4096" />
+        <global offwidth="800" offheight="800" />
+		<map fogstart="2" fogend="10" />
+        <rgba com="0.8 0.1 0.1 0.2" />
+        <!--headlight diffuse="0.8 0.8 0.8" /-->
+    </visual>
+    <option density="1.2" wind="-1.7 0 0" cone="elliptic" >
+        <flag warmstart="enable" />
+    </option>
+    <default>
+        <geom friction="0.2" margin="0" condim="6" rgba="0.95 0.6 0.6 1.0" />
+    </default>
+    <size njmax="1000" nconmax="1000" />
+    <asset>
+
+        <texture type="skybox" builtin="gradient" width="100" height="100" rgb1="0 0 0" rgb2="0 0 0" />
+        <texture name="grid" type="2d" builtin="checker" rgb1="0.1 0.3 0.6" rgb2="0.0 0.0 0.10" width="1024" height="1024" />
+        <material name="grid" texture="grid" texrepeat="6 6" reflectance="0.1" specular="0.6"  shininess="0.9" />
+
+        <texture name="marble" type="cube" file="models/textures/marble.png" />
+        <material name="marble" texture="marble" reflectance="0" texrepeat="1 1" />
+
+        <texture name="cross" type="cube" builtin="flat" mark="cross" gridsize="2 2" markrgb="0 0 0" width="100" height="100"/>
+        <material name="cross" texture="cross" texrepeat="4 4" />
+    </asset>
+    <contact>
+        <pair geom1="floor" geom2="box" friction="0.2 0.2" />
+
+    </contact>
+    <worldbody>
+
+        <light diffuse="0.9 0.9 0.9" pos="0 0 6" exponent="0.1" target="box" mode="fixed"/>
+        <light name="extra" dir="0 0 -1" pos="-1 -3 8" exponent="1" />
+
+        <geom name="floor" type="plane" euler="25 0 0" size="10 10 30" rgba="1 1 1 1" material="grid" />
+
+        <!-- Centered at floor after translation, ie y=z*sin(25), z=z*cos(25) -->
+        <body pos="0 -0.211309 0.453154" euler="25 0 0" name="box">
+            <freejoint />
+			<geom name="box" type="box" material="cross" size="0.5 0.5 0.5" rgba="1.0 0.663 0.71 0.99" mass="0.1" contype="1" conaffinity="2"/>
+			<body name="insidebox" pos="0 0 -0.25" >
+				<geom name="insidebox" type="box" material="marble" contype="0" conaffinity="0" size="0.25 0.5 0.25" rgba="0.8 0.6 0.6 0.8" mass="1" />
+			</body>
+        </body>
+
+        <body pos="0 -2.0239 -0.392083" euler="25 0 0">
+		   <geom name="obstacle" type="cylinder" size="0.5 0.5" rgba="1 1 1 1" contype="1" friction="0.2" />
+        </body>
+
+
+    </worldbody>
+</mujoco>
