@@ -430,9 +430,9 @@ class YuMi(gym.GoalEnv):
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         pos_reward = self.get_pos_reward(pos_distance)
-        distance_ratio = 0.1
-        reward = pos_reward - distance_ratio*ang_distance
-        logger.debug('Pos reward: %f, ang_distance: %f' % (pos_reward, distance_ratio*ang_distance))
+        ang_distance_ratio = 1.0
+        reward = pos_reward - ang_distance_ratio*ang_distance
+        logger.debug('Pos reward: %f, ang_distance: %f' % (pos_reward, ang_distance_ratio*ang_distance))
         return reward
 
     def get_pos_reward(self, distance, close=0.01, margin=0.475):
