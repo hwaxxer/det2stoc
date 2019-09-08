@@ -211,8 +211,8 @@ class YuMi(gym.GoalEnv):
             raise Exception('Additional tasks not implemented.')
 
         target_id = self.model.geom_name2id('target')
-        #target_qpos[0] = 0.5 + np.random.uniform(-0.05, 0.05)
-        #target_qpos[1] = np.random.uniform(0.13, 0.15)
+        target_qpos[0] = 0.5 + np.random.uniform(-0.05, 0.05)
+        target_qpos[1] = np.random.uniform(0.13, 0.15)
         height = self.model.geom_size[target_id][z_idx]
         target_qpos[2] = 0.051 + height
 
@@ -332,6 +332,11 @@ class YuMi(gym.GoalEnv):
         terminal = False
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
+        if not terminal:
+            # Check that the box didn't fly away
+            pos_distance = self.get_pos_distance(self.get_achieved_goal(), self.get_desired_goal())
+            if 0.5 < pos_distance:
+                terminal = True
 
         # Eventhough limits are specified in action_space, they 
         # are not honored by baselines so we clip them
@@ -385,7 +390,6 @@ class YuMi(gym.GoalEnv):
             stop_early = self.simstep()
 
             reward = self.compute_reward(self.get_achieved_goal(), self.get_desired_goal(), {})
-            reward == 1.0
 
             names = ['left_gripper_base', 'right_gripper_base']
             for name in names:
@@ -396,15 +400,13 @@ class YuMi(gym.GoalEnv):
                 radius = max(self.model.geom_size[target_id]) + 0.1 # Add a decimeter
 
                 penalty = max(0, gripper_distance - radius)
-                reward -= 0.01*penalty
+                #reward -= 0.01*penalty
                 logger.debug('%s penalty: %f' % (name, penalty))
                 
-            reward -= 0.01 * np.linalg.norm(self.joint_states_vel)
+            #reward -= 0.01 * np.linalg.norm(self.joint_states_vel)
             #reward -= force_penalty
             logger.debug('force penalty: %f' % force_penalty)
             terminal = self.steps == self.horizon
-        else: 
-            reward = -10
 
         if self.steps % self.hertz == 0:
             print('Step: {}, reward: {}'.format(
@@ -417,9 +419,13 @@ class YuMi(gym.GoalEnv):
     def get_distance(self, a, b):
         return np.linalg.norm(a - b, axis=-1)
 
-    def compute_reward(self, achieved_goal, desired_goal, info):
+    def get_pos_distance(self, achieved_goal, desired_goal):
         pos1, pos2 = achieved_goal[:3], desired_goal[:3]
-        pos_distance = self.get_distance(achieved_goal, desired_goal)
+        pos_distance = self.get_distance(pos1, pos2)
+        return pos_distance
+
+    def compute_reward(self, achieved_goal, desired_goal, info):
+        pos_distance = self.get_pos_distance(achieved_goal, desired_goal)
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         pos_reward = self.get_pos_reward(pos_distance)
@@ -428,7 +434,7 @@ class YuMi(gym.GoalEnv):
         logger.debug('Pos reward: %f, ang_distance: %f' % (pos_reward, distance_ratio*ang_distance))
         return reward
 
-    def get_pos_reward(self, distance, close=0.01, margin=0.15):
+    def get_pos_reward(self, distance, close=0.01, margin=0.475):
         # sigmoidal gaussian
         reward = 0 
         
