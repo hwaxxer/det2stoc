@@ -441,7 +441,7 @@ class YuMi(gym.GoalEnv):
         ang_distance_ratio = 1.0
         ang_distance_penalty = min(1.0, ang_distance_ratio*ang_distance)
         reward = pos_reward - ang_distance_penalty
-        logger.info('Reward: %f, pos reward: %f, ang_distance: %f' % (reward, pos_reward, ang_distance_penalty))
+        logger.debug('Reward: %f, pos reward: %f, ang_distance: %f' % (reward, pos_reward, ang_distance_penalty))
         return reward
 
     def get_pos_reward(self, distance, close=0.01, margin=0.475):
