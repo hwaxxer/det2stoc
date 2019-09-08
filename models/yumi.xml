@@ -4,7 +4,7 @@
         <quality shadowsize="1000"/>
         <headlight ambient="0.4 0.4 0.4" diffuse="0.5 0.5 0.5" specular="0.8 0.8 0.8" />
     </visual>
-    <option timestep="0.002" gravity="0 0 -9.81" iterations="100" integrator="Euler" cone="elliptic"  />
+    <option timestep="0.004" gravity="0 0 -9.81" iterations="100" integrator="Euler" cone="elliptic"  />
     <!-- Copied from PR2 model in GPS. This was necessary to get natural behaviour -->
     <default>
         <joint armature="0.04" limited="true" margin="0.01" />

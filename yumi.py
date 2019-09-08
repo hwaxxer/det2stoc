@@ -266,8 +266,8 @@ class YuMi(gym.GoalEnv):
         obs.extend(pos)
         obs.extend(vel)
 
-        self.joint_states_pos = np.array(pos) + np.random.normal(0, 0.01, size=len(pos))
-        self.joint_states_vel = np.array(vel) + np.random.normal(0, 0.01, size=len(vel))
+        self.joint_states_pos = np.array(pos) + np.random.normal(0, 0.001, size=len(pos))
+        self.joint_states_vel = np.array(vel) + np.random.normal(0, 0.001, size=len(vel))
 
         name = 'site:goal'
         pos = data.get_site_xpos(name)
@@ -335,7 +335,7 @@ class YuMi(gym.GoalEnv):
         terminal, force_penalty = self.bad_collision()
         if not terminal:
             # Check that the box didn't fly away
-            pos_distance = self.get_pos_distance(self.get_achieved_goal(), self.get_desired_goal())
+            pos_distance = self.get_goal_distance(self.get_achieved_goal(), self.get_desired_goal())
             if 0.5 < pos_distance:
                 terminal = True
 
@@ -420,13 +420,13 @@ class YuMi(gym.GoalEnv):
     def get_distance(self, a, b):
         return np.linalg.norm(a - b, axis=-1)
 
-    def get_pos_distance(self, achieved_goal, desired_goal):
+    def get_goal_distance(self, achieved_goal, desired_goal):
         pos1, pos2 = achieved_goal[:3], desired_goal[:3]
         pos_distance = self.get_distance(pos1, pos2)
         return pos_distance
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        pos_distance = self.get_pos_distance(achieved_goal, desired_goal)
+        pos_distance = self.get_goal_distance(achieved_goal, desired_goal)
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         pos_reward = self.get_pos_reward(pos_distance)
@@ -436,16 +436,7 @@ class YuMi(gym.GoalEnv):
         return reward
 
     def get_pos_reward(self, distance, close=0.01, margin=0.475):
-        # sigmoidal gaussian
-        reward = 0 
-        
-        if distance < close:
-            reward = 1.0
-        elif distance < margin:
-            scaled_distance = distance / margin;
-            scale = np.sqrt(-2 * np.log(margin))
-            reward += np.exp(-0.5 * (scale*scaled_distance)**2)
-        return reward
+        return max(0, 1-distance/margin)
 
     def _set_joint_limits(self):
         xml_str = self.model.get_xml()
