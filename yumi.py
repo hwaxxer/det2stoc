@@ -177,6 +177,13 @@ class YuMi(gym.GoalEnv):
         self.data.set_joint_qpos('yumi_joint_2_l', 0.1)
         self.data.set_joint_qpos('yumi_joint_2_r', 0.1)
 
+        self.data.set_joint_qpos('yumi_joint_1_r', -0.8)
+        self.data.set_joint_qpos('yumi_joint_2_l', 0.1)
+        self.data.set_joint_qpos('yumi_joint_2_r', 0.3)
+        self.data.set_joint_qpos('yumi_joint_4_r', 0.1)
+        self.data.set_joint_qpos('yumi_joint_5_r', -0.4)
+        self.data.set_joint_qpos('yumi_joint_7_r', 0.3)
+
         ''' randomize goal
         goal_id = self.model.body_name2id('goal')
         pos = self.model.body_pos[goal_id]
@@ -320,6 +327,7 @@ class YuMi(gym.GoalEnv):
             if False and self.sim.nsubsteps == self.steps_per_action and self.steps % 10 != 0:
                 return
 
+            time.sleep(0.5/self.hertz)
             self.viewer.render()
 
     def step(self, action):
