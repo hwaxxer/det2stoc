@@ -329,6 +329,7 @@ class YuMi(gym.GoalEnv):
         # MAX_TIME seconds
         self.steps += 1
 
+        reward = 0
         terminal = False
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
