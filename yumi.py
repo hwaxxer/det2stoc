@@ -39,10 +39,8 @@ class YuMi(gym.GoalEnv):
         for name in sorted(model.joint_names):
             if name == 'target':
                 continue
-            print('Name: ', name)
             self.joint_idx.append(model.joint_name2id(name))
 
-        print('joint idx: ', self.joint_idx)
         self.joint_states_pos = None
         self.joint_states_vel = None
         self.target_hist = deque(maxlen=2)
@@ -112,6 +110,7 @@ class YuMi(gym.GoalEnv):
             print('Caught exception: ', e)
             with open('exception.txt', 'w') as f:
                 f.write(str(e))
+            terminal = True
 
         self.render()
         return terminal
