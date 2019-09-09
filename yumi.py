@@ -16,7 +16,7 @@ from pid import PID
 logger = logging.getLogger('YuMi')
 
 np.set_printoptions(precision=7, suppress=True)
-MAX_TIME = 6.0 
+MAX_TIME = 4.0
 VELOCITY_CONTROLLER = False
 
 class YuMi(gym.GoalEnv):
@@ -213,7 +213,7 @@ class YuMi(gym.GoalEnv):
 
         target_id = self.model.geom_name2id('target')
         target_qpos[0] = 0.5 + np.random.uniform(-0.02, 0.02)
-        target_qpos[1] = np.random.uniform(0.13, 0.15)
+        target_qpos[1] = np.random.uniform(0.11, 0.15)
         height = self.model.geom_size[target_id][z_idx]
         target_qpos[2] = 0.051 + height
 
@@ -341,9 +341,6 @@ class YuMi(gym.GoalEnv):
         # Eventhough limits are specified in action_space, they 
         # are not honored by baselines so we clip them
         action = np.clip(action, self.action_space.low, self.action_space.high)
-        alpha = 0.5
-        self.previous_action = action
-        action = alpha*action + (1-alpha)*self.previous_action
 
         idx = 0
         if self.joint_states_pos[idx] > 1.2:
@@ -423,7 +420,7 @@ class YuMi(gym.GoalEnv):
         return np.linalg.norm(a - b, axis=-1)
 
     def get_goal_distance(self, achieved_goal, desired_goal):
-        pos1, pos2 = achieved_goal[:3], desired_goal[:3]
+        pos1, pos2 = achieved_goal[:], desired_goal[:]
         pos_distance = self.get_distance(pos1, pos2)
         return pos_distance
 
