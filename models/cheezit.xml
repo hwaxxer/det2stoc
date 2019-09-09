@@ -14,7 +14,7 @@
         <material name="marble" texture="marble" reflectance="0" texrepeat="1 1" />
     </asset>
     <contact>
-        <pair geom1="table" geom2="target" friction="0.35" />
+        <pair geom1="table" geom2="target" friction="0.4" />
     </contact>
     <worldbody>
 

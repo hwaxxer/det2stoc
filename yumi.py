@@ -43,6 +43,7 @@ class YuMi(gym.GoalEnv):
 
         self.joint_states_pos = None
         self.joint_states_vel = None
+        self.previous_action = np.zeros(14)
         self.target_hist = deque(maxlen=2)
         self.hertz = hertz
         self.steps = 0
@@ -340,6 +341,9 @@ class YuMi(gym.GoalEnv):
         # Eventhough limits are specified in action_space, they 
         # are not honored by baselines so we clip them
         action = np.clip(action, self.action_space.low, self.action_space.high)
+        alpha = 0.5
+        self.previous_action = action
+        action = alpha*action + (1-alpha)*self.previous_action
 
         idx = 0
         if self.joint_states_pos[idx] > 1.2:
