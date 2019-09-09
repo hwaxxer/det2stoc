@@ -177,15 +177,6 @@ class YuMi(gym.GoalEnv):
         self.data.set_joint_qpos('yumi_joint_2_l', 0.1)
         self.data.set_joint_qpos('yumi_joint_2_r', 0.1)
 
-        #self.data.set_joint_qpos('yumi_joint_1_r', -0.8)
-        #self.data.set_joint_qpos('yumi_joint_2_l', 0.3)
-        #self.data.set_joint_qpos('yumi_joint_2_r', 0.3)
-        #self.data.set_joint_qpos('yumi_joint_4_r', 0.3)
-        #self.data.set_joint_qpos('yumi_joint_5_r', -0.5)
-        #self.data.set_joint_qpos('yumi_joint_6_r', -0.5)
-        #self.data.set_joint_qpos('yumi_joint_7_r', 0.5)
-
-
         ''' randomize goal
         goal_id = self.model.body_name2id('goal')
         pos = self.model.body_pos[goal_id]
@@ -307,8 +298,8 @@ class YuMi(gym.GoalEnv):
         while len(self.target_hist) < self.target_hist.maxlen:
             self.target_hist.append(np.hstack([pos, mat]))
         self.target_hist.append(np.hstack([pos, mat]))
-        obs.extend(self.target_hist[-1])
 
+        obs.extend(self.target_hist[-1])
         obs.extend((self.target_hist[-1] - self.target_hist[-2])/(1/self.hertz))
 
         target_id = model.geom_name2id('target')
@@ -334,7 +325,6 @@ class YuMi(gym.GoalEnv):
 
         obs = self.get_observations()
 
-        # MAX_TIME seconds
         self.steps += 1
 
         reward = 0
@@ -439,12 +429,12 @@ class YuMi(gym.GoalEnv):
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         pos_reward = self.get_pos_reward(pos_distance)
         ang_distance_ratio = 1.0
-        ang_distance_penalty = min(1.0, ang_distance_ratio*ang_distance)
+        ang_distance_penalty = ang_distance_ratio*ang_distance
         reward = pos_reward - ang_distance_penalty
         logger.debug('Reward: %f, pos reward: %f, ang_distance: %f' % (reward, pos_reward, ang_distance_penalty))
         return reward
 
-    def get_pos_reward(self, distance, close=0.01, margin=0.475):
+    def get_pos_reward(self, distance, close=0.01, margin=0.2):
         return max(0, 1-distance/margin)
 
     def _set_joint_limits(self):
@@ -516,6 +506,7 @@ class YuMi(gym.GoalEnv):
         id = model.body_name2id('insidebox')
         model.body_pos[id][-1] = self.insidebox_com
 
+        logging.debug('Dynamics: ', self.dynamics)
         return self.dynamics
 
     def get_desired_goal(self):
