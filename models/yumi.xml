@@ -15,8 +15,6 @@
         <!-- For some reason these links collide -->
         <exclude body1="yumi_base_link" body2="left_link_1" />
         <exclude body1="yumi_base_link" body2="right_link_1" />
-
-        <!-- Link 5 and 7 sometimes collide, not sure if this can actually happen or not -->
         <exclude body1="left_link_5" body2="left_link_7" />
         <exclude body1="right_link_5" body2="right_link_7" />
     </contact>
@@ -51,9 +49,8 @@
         <mesh name="right_link_6_c" file="right_link_6_c.stl" />
         <mesh name="right_link_7_v" file="right_link_7_v.stl" />
         <mesh name="right_link_7_c" file="right_link_7_c.stl" />
-        <mesh name="smart_gripper_v" file="smart_gripper_v.stl" />
-        <mesh name="smart_gripper_c" file="smart_gripper_c.stl" />
-        <!--texture type="skybox" file="nightsky.png" gridsize="3 4" gridlayout=".U..LFRB.D.."/-->
+        <mesh name="gripper_base" file="gripper_base.stl" />
+        <mesh name="gripper_finger" file="gripper_finger.stl" />
         <texture type="skybox" builtin="gradient" width="100" height="100" rgb1="1 1 1" rgb2="0.8 0.8 1" />
         <texture builtin="flat" height="1278" mark="cross" markrgb="1 1 1" name="texgeom" random="0.01" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" type="cube" width="127"/>
         <texture builtin="checker" height="100" name="texplane" rgb1="0 0 0" rgb2="0.8 0.8 0.8" type="2d" width="100"/>
@@ -98,11 +95,16 @@
                                         <inertial pos="0.0148469 -0.0155979 -0.0142907" quat="0.470194 0.048331 -0.389545 0.790466" mass="0.0721865" diaginertia="2.40347e-05 2.01222e-05 1.96282e-05" />
                                         <joint name="yumi_joint_6_l" pos="0 0 0" axis="0.57121 -0.619367 -0.538612" limited="true" range="-3.97935 3.97935" damping="0.1" />
                                         <geom type="mesh" mesh="left_link_7_v" />
-                                        <body name="left_tool0" pos="0.02173 -0.02341 -0.02059" quat="0.297586 -0.0673761 0.874618 -0.376758">
+                                        <body name="left_gripper_base" pos="0.02173 -0.02341 -0.02059" quat="0.297586 -0.0673761 0.874618 -0.376758">
                                             <inertial pos="0.02173 -0.02341 -0.02059" quat="0.297586 -0.0673761 0.874618 -0.376758" mass="0" diaginertia="0 0 0" />
-                                            <body name="left_gripper_base" pos="0 0 0">
-                                                <inertial pos="1.20154e-05 0.00242304 0.0527266" quat="0.706871 0.00701907 -0.0072129 0.707271" mass="0.563549" diaginertia="0.00101254 0.000796983 0.000496939" />
-                                                <geom name="left_gripper_base" type="mesh" rgba="0.6 0.6 0.6 1" mesh="smart_gripper_v" />
+                                            <geom name="left_gripper_base" type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_base" />
+                                            <body name="gripper_l_finger_r" pos="0.01 0.0065 0.0837" quat="0 0 0 1">
+                                                <inertial pos="0 0 0" mass="0.01" />
+                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" />
+                                            </body>
+                                            <body name="gripper_l_finger_l" pos="-0.01 -0.0065 0.0837">
+                                                <inertial pos="0 0 0" mass="0.01" />
+                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" />
                                             </body>
                                         </body>
                                     </body>
@@ -140,11 +142,16 @@
                                         <inertial pos="0.0144296 0.0160357 -0.0132869" quat="0.201483 0.412494 -0.819005 0.344216" mass="0.0748575" diaginertia="2.59881e-05 2.12717e-05 2.08339e-05" />
                                         <joint name="yumi_joint_6_r" pos="0 0 0" axis="0.571393 0.619384 -0.538399" limited="true" range="-3.97935 3.97935" damping="0.1" />
                                         <geom type="mesh" mesh="right_link_7_v" />
-                                        <body name="right_tool0" pos="0.02173 0.02341 -0.02059" quat="0.297586 0.0673761 0.874618 0.376758">
+                                        <body name="right_gripper_base" pos="0.02173 0.02341 -0.02059" quat="0.297586 0.0673761 0.874618 0.376758">
+                                            <geom name="right_gripper_base" type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_base" />
                                             <inertial pos="0.02173 0.02341 -0.02059" quat="0.297586 0.0673761 0.874618 0.376758" mass="0" diaginertia="0 0 0" />
-                                            <body name="right_gripper_base" pos="0 0 0">
-                                                <inertial pos="1.20154e-05 0.00242304 0.0527266" quat="0.706871 0.00701907 -0.0072129 0.707271" mass="0.563549" diaginertia="0.00101254 0.000796983 0.000496939" />
-                                                <geom name="right_gripper_base" type="mesh" rgba="0.6 0.6 0.6 1" mesh="smart_gripper_v" />
+                                            <body name="gripper_r_finger_r" pos="-0.01 -0.0065 0.0837">
+                                                <inertial pos="0 0 0" mass="0.01" />
+                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" />
+                                            </body>
+                                            <body name="gripper_r_finger_l" pos="0.01 0.0065 0.0837" quat="0 0 0 1">
+                                                <inertial pos="0 0 0" mass="0.01" />
+                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" />
                                             </body>
                                         </body>
                                     </body>
