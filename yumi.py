@@ -502,8 +502,6 @@ class YuMi(gym.GoalEnv):
 
         id = model.body_name2id('insidebox')
         model.body_mass[id] = self.insidebox_mass
-
-        id = model.body_name2id('insidebox')
         model.body_pos[id][-1] = self.insidebox_com
 
         logging.debug('Dynamics: ', self.dynamics)
