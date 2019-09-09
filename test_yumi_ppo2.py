@@ -26,7 +26,7 @@ assert not args.render or (args.render and 1 == n_cpu), 'Cannot render when usin
 
 real = True
 if real:
-    params = [0.5, 0.085]
+    params = [0.25, -0.085]
 else:
     params = [(0.0, 0.5), (0.085, -0.085)]
 
