@@ -54,7 +54,7 @@ class YuMi(gym.GoalEnv):
 
         self._set_joint_limits()
 
-        self.dynamics = dynamics
+        self.generate_dynamics = dynamics
 
     @property
     def model(self):
@@ -86,7 +86,7 @@ class YuMi(gym.GoalEnv):
     @property
     def observation_space(self):
         d = spaces.Dict({
-            'observation': spaces.Box(low=-np.inf, high=np.inf, shape=(94,), dtype=np.float32),
+            'observation': spaces.Box(low=-np.inf, high=np.inf, shape=(91,), dtype=np.float32),
             'desired_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32),
             'achieved_goal': spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)
             })
@@ -138,7 +138,7 @@ class YuMi(gym.GoalEnv):
                 action[i] = pid(qpos, data.time)
             res = action
             res -= self.joint_states_vel * dt
-            data.qacc[self.joint_idx] = (2.0 / dt**2) * res
+            data.qacc[self.joint_idx] = (1.0 / dt**2) * res
 
         functions.mj_inverse(model, data)
         data.qfrc_applied[self.joint_idx] = data.qfrc_inverse[self.joint_idx]
@@ -154,7 +154,7 @@ class YuMi(gym.GoalEnv):
 
         self.pids = []
         for i in range(self.model.nu):
-            pid = PID(Kp=1.0, Kd=0.001, sample_time=0)
+            pid = PID(Kp=3.0, Kd=0.001, sample_time=0)
             pid.output_limits = (self.action_space.low[i], self.action_space.high[i])
             self.pids.append(pid)
 
@@ -177,12 +177,14 @@ class YuMi(gym.GoalEnv):
         self.data.set_joint_qpos('yumi_joint_2_l', 0.1)
         self.data.set_joint_qpos('yumi_joint_2_r', 0.1)
 
-        self.data.set_joint_qpos('yumi_joint_1_r', -0.8)
-        self.data.set_joint_qpos('yumi_joint_2_l', 0.1)
-        self.data.set_joint_qpos('yumi_joint_2_r', 0.3)
-        self.data.set_joint_qpos('yumi_joint_4_r', 0.1)
-        self.data.set_joint_qpos('yumi_joint_5_r', -0.4)
-        self.data.set_joint_qpos('yumi_joint_7_r', 0.3)
+        #self.data.set_joint_qpos('yumi_joint_1_r', -0.8)
+        #self.data.set_joint_qpos('yumi_joint_2_l', 0.3)
+        #self.data.set_joint_qpos('yumi_joint_2_r', 0.3)
+        #self.data.set_joint_qpos('yumi_joint_4_r', 0.3)
+        #self.data.set_joint_qpos('yumi_joint_5_r', -0.5)
+        #self.data.set_joint_qpos('yumi_joint_6_r', -0.5)
+        #self.data.set_joint_qpos('yumi_joint_7_r', 0.5)
+
 
         ''' randomize goal
         goal_id = self.model.body_name2id('goal')
@@ -218,7 +220,7 @@ class YuMi(gym.GoalEnv):
             raise Exception('Additional tasks not implemented.')
 
         target_id = self.model.geom_name2id('target')
-        target_qpos[0] = 0.5 + np.random.uniform(-0.05, 0.05)
+        target_qpos[0] = 0.5 + np.random.uniform(-0.02, 0.02)
         target_qpos[1] = np.random.uniform(0.13, 0.15)
         height = self.model.geom_size[target_id][z_idx]
         target_qpos[2] = 0.051 + height
@@ -310,12 +312,8 @@ class YuMi(gym.GoalEnv):
         obs.extend((self.target_hist[-1] - self.target_hist[-2])/(1/self.hertz))
 
         target_id = model.geom_name2id('target')
-        mass = model.body_mass[target_id]
-        obs.append(mass)
         size = model.geom_size[target_id]
         obs.extend(size)
-
-        obs.extend(self.get_dynamics())
 
         obs = np.array(obs)
         observations['observation'] = obs
@@ -506,22 +504,19 @@ class YuMi(gym.GoalEnv):
         return bad_collision, force_penalty
 
     def get_dynamics(self):
-        return [self.friction, self.com]
+        return self.dynamics
 
     def randomize_dynamics(self, model):
-        dynamics = self.dynamics()
-        friction, com = dynamics
+        self.dynamics = self.generate_dynamics()
+        self.insidebox_mass, self.insidebox_com = self.dynamics
 
-        self.friction = friction
-        self.com = com 
+        id = model.body_name2id('insidebox')
+        model.body_mass[id] = self.insidebox_mass
 
-        #pair_friction = model.pair_friction[0]
-        #pair_friction[:2] = self.friction
+        id = model.body_name2id('insidebox')
+        model.body_pos[id][-1] = self.insidebox_com
 
-        #bodyid = model.body_name2id('insidebox')
-        #model.body_pos[bodyid][0] = com
-
-        return dynamics
+        return self.dynamics
 
     def get_desired_goal(self):
         return self.get_site_pose('site:goal')
