@@ -15,7 +15,7 @@ from pid import PID
 
 logger = logging.getLogger('YuMi')
 
-np.set_printoptions(precision=7, suppress=True)
+np.set_printoptions(precision=4, suppress=True)
 MAX_TIME = 4.0
 VELOCITY_CONTROLLER = False
 
@@ -65,7 +65,6 @@ class YuMi(gym.GoalEnv):
     def model(self, model):
         self._model = model
         self.sim = MjSim(model, udd_callback=self.callback)
-        #self.sim = MjSim(model, nsubsteps=self.steps_per_action, udd_callback=self.callback)
         self.data = self.sim.data
         if self.should_render and not self.viewer:
             self.viewer = MjViewer(self.sim)
@@ -159,9 +158,7 @@ class YuMi(gym.GoalEnv):
             pid.output_limits = (self.action_space.low[i], self.action_space.high[i])
             self.pids.append(pid)
 
-        #model = load_model_from_path(self.path)
-        self.randomize_dynamics(self.model)
-        #self.model = model
+        _ = self.randomize_dynamics(self.model)
         self.sim.reset()
 
         self.set_initial_pose()
@@ -332,6 +329,8 @@ class YuMi(gym.GoalEnv):
         terminal = False
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
+
+        terminal = terminal or 100 < force_penalty
         if not terminal:
             # Check that the box didn't fly away
             pos_distance = self.get_goal_distance(self.get_achieved_goal(), self.get_desired_goal())
@@ -385,27 +384,13 @@ class YuMi(gym.GoalEnv):
         #action += np.random.normal(0, 0.001, size=len(action))
 
         if not terminal:
-            self.data.userdata[:] = action
 
             stop_early = self.simstep()
 
             reward = self.compute_reward(self.get_achieved_goal(), self.get_desired_goal(), {})
 
-            names = ['left_gripper_base', 'right_gripper_base']
-            for name in names:
-                pos = self.data.get_body_xpos(name)
-                target_pos = self.data.get_body_xpos('target')
-                gripper_distance = self.get_distance(target_pos, pos)
-                target_id = self.model.geom_name2id('target')
-                radius = max(self.model.geom_size[target_id]) + 0.1 # Add a decimeter
-
-                penalty = max(0, gripper_distance - radius)
-                #reward -= 0.01*penalty
-                logger.debug('%s penalty: %f' % (name, penalty))
-                
-            #reward -= 0.01 * np.linalg.norm(self.joint_states_vel)
             #reward -= force_penalty
-            logger.debug('force penalty: %f' % force_penalty)
+            #logger.debug('force penalty: %f' % force_penalty)
             terminal = self.steps == self.horizon
 
         if self.steps % self.hertz == 0:
@@ -506,7 +491,7 @@ class YuMi(gym.GoalEnv):
         model.body_pos[id][-1] = self.insidebox_com
 
         logging.debug('Dynamics: ', self.dynamics)
-        return self.dynamics
+        return model
 
     def get_desired_goal(self):
         return self.get_site_pose('site:goal')

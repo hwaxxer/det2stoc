@@ -26,9 +26,9 @@ assert not args.render or (args.render and 1 == n_cpu), 'Cannot render when usin
 
 real = True
 if real:
-    params = [0.25, -0.085]
+    params = [0.25, -0.08]
 else:
-    params = [(0.0, 0.5), (0.085, -0.085)]
+    params = [(0.0, 0.5), (-0.085, 0.085)]
 
 def dynamics_params(seed):
     if real:
@@ -51,7 +51,9 @@ env = SubprocVecEnv(yumis)
 
 model = PPO2.load(args.model_path, env=env, policy=MlpPolicy)
 
-n_episodes = 100 if real else 1000 // n_cpu
+n_episodes = 100 if real else 5000
+n_episodes //= n_cpu
+
 observations = []
 
 horizon = env.env_method('get_horizon')[0]
@@ -64,7 +66,7 @@ for ep in range(n_episodes):
         l = [[] for _ in range(n_cpu)]
         for i in range(n_cpu):
             l[i].append(obs[i])
-        action, _states = model.predict(obs, deterministic=True)
+        action, _states = model.predict(obs, deterministic=False)
         obs, rewards, done, info = env.step(action)
         for i in range(n_cpu):
             l[i].extend([action[i], obs[i]])
