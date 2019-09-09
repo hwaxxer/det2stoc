@@ -22,14 +22,13 @@ os.makedirs(log_dir, exist_ok=True)
 path = args.xml_path
 name = os.path.basename(path)
 
-n_cpu = 12
+n_cpu = 32
 
-ranges = [(0.23, 0.23), (0.035, 0.035)]
-
+params  = [0.25, -0.085]
 
 def make_env(path, render, i, seed=0):
     def create_yumi():
-        dynamics = lambda: [np.random.uniform(lo, hi) for lo, hi in ranges]
+        dynamics = lambda: params
         return YuMi(path, task=args.task, render=render, seed=seed, dynamics=dynamics)
 
     return create_yumi
