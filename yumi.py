@@ -305,7 +305,9 @@ class YuMi(gym.GoalEnv):
         while len(self.target_hist) < self.target_hist.maxlen:
             self.target_hist.append(np.hstack([pos, mat]))
         self.target_hist.append(np.hstack([pos, mat]))
-        obs.extend(np.ravel(self.target_hist))
+        obs.extend(self.target_hist[-1])
+
+        obs.extend((self.target_hist[-1] - self.target_hist[-2])/(1/self.hertz))
 
         target_id = model.geom_name2id('target')
         mass = model.body_mass[target_id]
