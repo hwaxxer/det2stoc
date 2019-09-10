@@ -95,6 +95,9 @@ class YuMi(gym.GoalEnv):
         else:
             return d['observation']
 
+    def get_step(self):
+        return self.steps
+
     def simstep(self):
         try:
             if self.sim.nsubsteps == self.steps_per_action:
@@ -416,7 +419,7 @@ class YuMi(gym.GoalEnv):
         return reward
 
     def get_pos_reward(self, distance, close=0.01, margin=0.2):
-        return min(0, max(0, 1-distance/margin))
+        return max(0, 1-distance/margin)
 
     def _set_joint_limits(self):
         xml_str = self.model.get_xml()
@@ -481,7 +484,6 @@ class YuMi(gym.GoalEnv):
         fri, icom = self.dynamics
 
         id = model.body_name2id('insidebox')
-        #model.body_mass[id] = im
         model.body_pos[id][-1] = icom
 
         for pair in range(model.npair):
