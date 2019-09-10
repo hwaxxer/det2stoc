@@ -14,7 +14,7 @@
         <material name="marble" texture="marble" reflectance="0" texrepeat="1 1" />
     </asset>
     <contact>
-        <pair geom1="table" geom2="target" friction="0.4" />
+        <pair geom1="table" geom2="target" friction="0.4 0.4" />
     </contact>
     <worldbody>
 
@@ -23,7 +23,7 @@
             <joint type="free" name="target" limited="false" armature="0" damping="0"/>
             <geom name="target" material="cross" type="box" size="0.03 0.079 0.105" mass="0.054" rgba="1 0.663 0.71 0.5" />
             <body name="insidebox" pos="0 0 -0.085" >
-                <geom name="insidebox" type="box" material="marble" size="0.03 0.075 0.02" contype="0" conaffinity="0" rgba="0 0 0 0.9" mass="0.25" />
+                <geom name="insidebox" type="box" material="marble" size="0.03 0.075 0.02" contype="0" conaffinity="0" rgba="0 0 0 0.9" mass="0.5" />
             </body>
             <site name="site:target" size="0.005" pos="0 0 0" rgba="0.965 0.784 0 1"/>
             <site name="site:front" type="box" size="0.0001 0.005 0.005" pos="0.03 0 0" rgba="1 1 1 1"/>
