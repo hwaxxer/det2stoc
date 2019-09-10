@@ -100,11 +100,11 @@
                                             <geom name="left_gripper_base" type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_base" />
                                             <body name="gripper_l_finger_r" pos="0.01 0.0065 0.0837" quat="0 0 0 1">
                                                 <inertial pos="0 0 0" mass="0.01" />
-                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" />
+                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" name="gripper_l_finger_r"/>
                                             </body>
                                             <body name="gripper_l_finger_l" pos="-0.01 -0.0065 0.0837">
                                                 <inertial pos="0 0 0" mass="0.01" />
-                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" />
+                                                <geom type="mesh" rgba="0.8 0.8 0.8 1" mesh="gripper_finger" name="gripper_l_finger_l" />
                                             </body>
                                         </body>
                                     </body>
