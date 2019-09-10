@@ -209,8 +209,8 @@ class YuMi(gym.GoalEnv):
             raise Exception('Additional tasks not implemented.')
 
         target_id = self.model.geom_name2id('target')
-        target_qpos[0] = 0.5 + np.random.uniform(-0.02, 0.02)
-        target_qpos[1] = np.random.uniform(0.11, 0.15)
+        target_qpos[0] = 0.5 + np.random.uniform(-0.01, 0.01)
+        target_qpos[1] = np.random.uniform(0.14, 0.15)
         height = self.model.geom_size[target_id][z_idx]
         target_qpos[2] = 0.051 + height
 
@@ -330,12 +330,7 @@ class YuMi(gym.GoalEnv):
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
 
-        terminal = terminal or 100 < force_penalty
-        if not terminal:
-            # Check that the box didn't fly away
-            pos_distance = self.get_goal_distance(self.get_achieved_goal(), self.get_desired_goal())
-            if 0.5 < pos_distance:
-                terminal = True
+        terminal = terminal
 
         # Eventhough limits are specified in action_space, they 
         # are not honored by baselines so we clip them
@@ -421,7 +416,7 @@ class YuMi(gym.GoalEnv):
         return reward
 
     def get_pos_reward(self, distance, close=0.01, margin=0.2):
-        return max(0, 1-distance/margin)
+        return min(0, max(0, 1-distance/margin))
 
     def _set_joint_limits(self):
         xml_str = self.model.get_xml()
@@ -468,8 +463,7 @@ class YuMi(gym.GoalEnv):
                 body2_cfrc = sim.data.cfrc_ext[bodyid2]
                 body2_contact_force_norm = np.sqrt(np.sum(np.square(body2_cfrc)))
 
-                force_penalty = (0.1*np.log(1 + body1_contact_force_norm) +
-                    0.1*np.log(1 + body2_contact_force_norm))
+                force_penalty = body1_contact_force_norm + body2_contact_force_norm
             else:
                 bad_collision = True
                 if bad_collision:
@@ -484,11 +478,20 @@ class YuMi(gym.GoalEnv):
 
     def randomize_dynamics(self, model):
         self.dynamics = self.generate_dynamics()
-        self.insidebox_mass, self.insidebox_com = self.dynamics
+        fri, icom = self.dynamics
 
         id = model.body_name2id('insidebox')
-        model.body_mass[id] = self.insidebox_mass
-        model.body_pos[id][-1] = self.insidebox_com
+        #model.body_mass[id] = im
+        model.body_pos[id][-1] = icom
+
+        for pair in range(model.npair):
+            tableid = model.geom_name2id('table')
+            targetid = model.geom_name2id('target')
+            if ((model.pair_geom1 == tableid and model.pair_geom2 == targetid) or
+               (model.pair_geom2 == tableid and model.pair_geom1 == targetid)):
+
+                pair_friction = model.pair_friction[pair]
+                pair_friction[:2] = [fri, fri]
 
         logging.debug('Dynamics: ', self.dynamics)
         return model
