@@ -22,9 +22,9 @@ os.makedirs(log_dir, exist_ok=True)
 path = args.xml_path
 name = os.path.basename(path)
 
-n_cpu = 32
+n_cpu = 6
 
-params  = [0.25, -0.085]
+params  = [0.23, 0.085]
 
 def make_env(path, render, i, seed=0):
     def create_yumi():
@@ -37,33 +37,29 @@ seeds = np.arange(n_cpu)
 env = SubprocVecEnv([make_env(path, args.render, i, seed=i) for i in range(n_cpu)])
 
 n_steps = 0
-finetune = False
+finetune = args.checkpoint_path is None
 total_timesteps = int(100e6)
 
 def callback(_locals, _globals):
     global n_steps
      
     n_steps += 1
-    if n_steps % 500 == 0 or n_steps == 100:
-        print('Saving: ', n_steps)
+    if n_steps % 10 == 0 or n_steps < 10:
         if finetune:
-            save_path = 'checkpoints/yumi/ppo2/ppo2_finetune_{}_task_{}_{}.npy'.format(name, args.task, n_steps)
+            save_path = os.path.join(log_dir, 'ppo2_finetune_{}_task_{}_{}.npy'.format(name, args.task, n_steps))
         else:
-            save_path = 'checkpoints/yumi/ppo2/ppo2_{}_task_{}_{}.npy'.format(name, args.task, n_steps)
+            save_path = os.path.join(log_dir, 'ppo2_{}_task_{}_{}.npy'.format(name, args.task, n_steps))
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         model.save(save_path)
 
     return True
 
 if args.checkpoint_path is None:
-    model = PPO2(MlpPolicy, env, verbose=1, tensorboard_log=log_dir)
+    model = PPO2(MlpPolicy, env, n_steps=1024, verbose=1, tensorboard_log=log_dir)
 else:
-    finetune = True
-    model = PPO2.load(args.checkpoint_path, env=env, policy=MlpPolicy)
+    model = PPO2.load(args.checkpoint_path, env=env, policy=MlpPolicy, tensorboard_log=log_dir)
 
 model.learn(total_timesteps=total_timesteps, callback=callback)
-
-env.save_running_average(log_dir)
 
 obs = env.reset()
 for i in range(100):

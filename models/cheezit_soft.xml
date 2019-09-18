@@ -1,0 +1,47 @@
+<mujoco model="cheezit">
+    <compiler texturedir="textures"/>
+    <include file="yumi.xml"/>
+    <include file="table.xml"/>
+    <asset>
+        <texture builtin="checker" name="checker" rgb1="0 0 0" rgb2="1 1 1" type="2d" width="10" height="10"/>
+        <material name="finish"  reflectance="0.01" shininess="1" specular="1" texrepeat="10 10" texture="checker" />
+        <mesh file="cheezit.stl"/>
+
+        <texture name="cross" type="cube" builtin="flat" mark="cross" gridsize="2 2" markrgb="0 0 0" width="100" height="100"/>
+        <material name="cross" texture="cross" texrepeat="4 4" />
+
+        <texture name="marble" type="cube" file="marble.png" />
+        <material name="marble" texture="marble" reflectance="0" texrepeat="1 1" />
+    </asset>
+    <contact>
+        <pair geom1="table" geom2="target" friction="0.35 0.35" />
+    </contact>
+    <worldbody>
+
+        <!-- table is at 0.051 -->
+        <body name="target" pos="0.5 0.15 0.156">
+            <joint type="free" name="target" limited="false" armature="0" damping="0"/>
+            <composite type="box" count="3 8 11" spacing="0.021" prefix="box-composite-" solimpsmooth="0.95 0.95 0.01">
+                <joint kind="main" range="-0.001 0.001" limited="true" />
+                <geom type="capsule" size="0.01 0.01" rgba=".8 .2 .1 0.4"/>
+            </composite>
+            <geom name="target" type="box" size="0.03 0.079 0.105" mass="0.054" conaffinity="0" contype="0" rgba="1 0.663 0.71 0.5" />
+            <body name="insidebox" pos="0 0 0.085" >
+                <geom name="insidebox" type="box" material="marble" size="0.03 0.075 0.02" contype="0" conaffinity="0" rgba="0 0 0 0.9" mass="0.5" />
+            </body>
+            <site name="site:target" size="0.005" pos="0 0 0" rgba="0.965 0.784 0 1"/>
+        </body>
+
+        <body name="goal" pos="0.5 0.0 0.156">
+            <site name="site:goal" type="box" size="0.03 0.079 0.105" rgba="0.259 0.682 0.2 0.1"/>
+        </body>
+
+    </worldbody>
+    <tendon>
+        <spatial width="0.001" rgba="0.459 0.482 0.2 0.2">
+            <site site="site:target"/>
+            <site site="site:goal"/>
+        </spatial>
+    </tendon>
+
+</mujoco>

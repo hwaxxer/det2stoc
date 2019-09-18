@@ -13,7 +13,6 @@ import logging
 from gym.envs.robotics import rotations
 from pid import PID
 
-logger = logging.getLogger('YuMi')
 
 np.set_printoptions(precision=4, suppress=True)
 MAX_TIME = 4.0
@@ -24,8 +23,7 @@ class YuMi(gym.GoalEnv):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, path, dynamics, task, goal_env=False, hertz=25, render=True, seed=0, logging_level=logging.INFO):
-        logger.setLevel(logging_level)
-        logger.debug('seed: %s' % seed)
+        logging.basicConfig(level=logging_level)
         tf.set_random_seed(seed)
         np.random.seed(seed)
         random.seed(seed)
@@ -37,7 +35,7 @@ class YuMi(gym.GoalEnv):
 
         self.joint_idx = []
         for name in sorted(model.joint_names):
-            if name == 'target':
+            if 'yumi' not in name:
                 continue
             self.joint_idx.append(model.joint_name2id(name))
 
@@ -157,7 +155,7 @@ class YuMi(gym.GoalEnv):
 
         self.pids = []
         for i in range(self.model.nu):
-            pid = PID(Kp=3.0, Kd=0.001, sample_time=0)
+            pid = PID(Kp=1.0, Kd=0.001, sample_time=0)
             pid.output_limits = (self.action_space.low[i], self.action_space.high[i])
             self.pids.append(pid)
 
@@ -165,11 +163,9 @@ class YuMi(gym.GoalEnv):
         self.sim.reset()
 
         self.set_initial_pose()
-
         self.sim.forward()
 
         obs = self.get_observations()
-        logging.debug('Reset returning: ', obs)
         return obs
 
     def set_initial_pose(self):
@@ -319,12 +315,9 @@ class YuMi(gym.GoalEnv):
             if False and self.sim.nsubsteps == self.steps_per_action and self.steps % 10 != 0:
                 return
 
-            time.sleep(0.5/self.hertz)
             self.viewer.render()
 
     def step(self, action):
-
-        obs = self.get_observations()
 
         self.steps += 1
 
@@ -381,21 +374,21 @@ class YuMi(gym.GoalEnv):
         # Perturbate action
         #action += np.random.normal(0, 0.001, size=len(action))
 
+        stop_early = self.simstep()
+        terminal = terminal or stop_early
+        obs = self.get_observations()
+
         if not terminal:
-
-            stop_early = self.simstep()
-
             reward = self.compute_reward(self.get_achieved_goal(), self.get_desired_goal(), {})
-
             #reward -= force_penalty
             #logger.debug('force penalty: %f' % force_penalty)
             terminal = self.steps == self.horizon
 
         if self.steps % self.hertz == 0:
-            print('Step: {}, reward: {}'.format(
+            logging.info('Step: {}, reward: {}'.format(
                 self.steps, reward))
             if 0.8 < reward and self.steps == self.horizon:
-                print('**** LOOKING GOOD ****')
+                logging.info('**** LOOKING GOOD ****')
 
         return obs, reward, terminal, {}
 
@@ -409,13 +402,18 @@ class YuMi(gym.GoalEnv):
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         pos_distance = self.get_goal_distance(achieved_goal, desired_goal)
+        pos_reward = self.get_pos_reward(pos_distance)
+
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
-        pos_reward = self.get_pos_reward(pos_distance)
         ang_distance_ratio = 1.0
-        ang_distance_penalty = ang_distance_ratio*ang_distance
-        reward = pos_reward - ang_distance_penalty
-        logger.debug('Reward: %f, pos reward: %f, ang_distance: %f' % (reward, pos_reward, ang_distance_penalty))
+        ang_distance_reward = max(0, 1-ang_distance_ratio*ang_distance)
+
+        alpha = 0.3
+        reward = alpha*pos_reward + (1-alpha)*ang_distance_reward
+
+        if self.steps % 10 == 0:
+            logging.debug('Reward: %f, pos reward: %f, ang reward: %f' % (reward, pos_reward, ang_distance_reward))
         return reward
 
     def get_pos_reward(self, distance, close=0.01, margin=0.2):
@@ -426,7 +424,7 @@ class YuMi(gym.GoalEnv):
         tree = EE.fromstring(xml_str)
         low, high = [], []
         for name in sorted(self.model.joint_names):
-            if name == 'target':
+            if 'yumi' not in name:
                 continue
             limit = tree.find(".//joint[@name='{}']".format(name))
             limit_range = [float(x) for x in limit.get('range').split(' ')]
@@ -455,6 +453,7 @@ class YuMi(gym.GoalEnv):
             root_bodyname2 = self.model.body_id2name(rootid2)
 
             is_target = 'target' in bodyname1 or 'target' in bodyname2
+            is_target = is_target or 'box-composite' in bodyname1 or 'box-composite' in bodyname2
             is_table = 'table' in bodyname1 or 'table' in bodyname2
 
             if is_target and is_table:
@@ -495,7 +494,9 @@ class YuMi(gym.GoalEnv):
                 pair_friction = model.pair_friction[pair]
                 pair_friction[:2] = [fri, fri]
 
-        logging.debug('Dynamics: ', self.dynamics)
+        logging.debug('Dynamics: {}'.format(self.dynamics))
+
+        self.sim.forward()
         return model
 
     def get_desired_goal(self):
