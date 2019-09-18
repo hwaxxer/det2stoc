@@ -10,7 +10,7 @@
         <joint armature="0.04" limited="true" margin="0.01" />
         <geom friction=".5" margin="0.001"/>
     </default>
-    <size njmax="500" nconmax="100" />
+    <size njmax="1000" nconmax="100" />
     <contact>
         <!-- For some reason these links collide -->
         <exclude body1="yumi_base_link" body2="left_link_1" />
