@@ -407,7 +407,7 @@ class YuMi(gym.GoalEnv):
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
         ang_distance_ratio = 0.5
-        ang_distance_penalty = -ang_distance_ratio*ang_distance
+        ang_distance_penalty = ang_distance_ratio*ang_distance
 
         reward = pos_reward - ang_distance_penalty
 
