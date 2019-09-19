@@ -353,7 +353,7 @@ class YuMi(gym.GoalEnv):
         idx = -2
         if self.joint_states_pos[idx] > 0.2:
             action[idx] = min(action[idx], 0)
-        elif self.joint_states_pos[idx] < -0.45:
+        elif self.joint_states_pos[idx] < -0.4:
             action[idx] = max(action[idx], 0)
 
         idx = -1
@@ -406,14 +406,13 @@ class YuMi(gym.GoalEnv):
 
         euler1, euler2 = achieved_goal[3:], desired_goal[3:]
         ang_distance = np.linalg.norm(rotations.subtract_euler(euler1, euler2), axis=-1)
-        ang_distance_ratio = 1.0
-        ang_distance_reward = max(0, 1-ang_distance_ratio*ang_distance)
+        ang_distance_ratio = 0.5
+        ang_distance_penalty = -ang_distance_ratio*ang_distance
 
-        alpha = 0.3
-        reward = alpha*pos_reward + (1-alpha)*ang_distance_reward
+        reward = pos_reward - ang_distance_penalty
 
         if self.steps % 10 == 0:
-            logging.debug('Reward: %f, pos reward: %f, ang reward: %f' % (reward, pos_reward, ang_distance_reward))
+            logging.debug('Reward: %f, pos reward: %f, ang penalty: %f' % (reward, pos_reward, ang_distance_penalty))
         return reward
 
     def get_pos_reward(self, distance, close=0.01, margin=0.2):
