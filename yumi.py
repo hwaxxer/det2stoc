@@ -79,7 +79,7 @@ class YuMi(gym.GoalEnv):
 
     @property
     def action_space(self):
-        return spaces.Box(low=-0.01, high=0.01, shape=(14,), dtype=np.float32)
+        return spaces.Box(low=-0.1, high=0.1, shape=(14,), dtype=np.float32)
 
     @property
     def observation_space(self):
@@ -143,7 +143,7 @@ class YuMi(gym.GoalEnv):
 
         functions.mj_inverse(model, data)
         data.qfrc_applied[self.joint_idx] = data.qfrc_inverse[self.joint_idx]
-        
+
 
     def reset(self):
 
@@ -236,7 +236,7 @@ class YuMi(gym.GoalEnv):
         return result
 
     def get_observations(self):
-        """ 
+        """
         This functions looks a bit awkward since it is trying to replicate
         the order of observations when listening to transforms using ROS TF.
         """
@@ -318,6 +318,7 @@ class YuMi(gym.GoalEnv):
             self.viewer.render()
 
     def step(self, action):
+        action = .1*action
 
         self.steps += 1
 
@@ -325,8 +326,8 @@ class YuMi(gym.GoalEnv):
         terminal = False
         # Check for early termination
         terminal, force_penalty = self.bad_collision()
-
-        terminal = terminal
+        if terminal:
+            reward = -10
 
         # Eventhough limits are specified in action_space, they 
         # are not honored by baselines so we clip them
@@ -359,7 +360,7 @@ class YuMi(gym.GoalEnv):
         idx = -1
         if self.joint_states_pos[idx] < -0.2:
             action[idx] = max(action[idx], 0)
-        elif self.joint_states_pos[idx] > 0.45:
+        elif self.joint_states_pos[idx] > 0.4:
             action[idx] = min(action[idx], 0)
 
         if VELOCITY_CONTROLLER:
@@ -445,12 +446,6 @@ class YuMi(gym.GoalEnv):
             bodyname1 = self.model.body_id2name(bodyid1)
             bodyname2 = self.model.body_id2name(bodyid2)
 
-            rootid1 = self.model.body_rootid[bodyid1]
-            rootid2 = self.model.body_rootid[bodyid2]
-
-            root_bodyname1 = self.model.body_id2name(rootid1)
-            root_bodyname2 = self.model.body_id2name(rootid2)
-
             is_target = 'target' in bodyname1 or 'target' in bodyname2
             is_target = is_target or 'box-composite' in bodyname1 or 'box-composite' in bodyname2
             is_table = 'table' in bodyname1 or 'table' in bodyname2
@@ -458,6 +453,7 @@ class YuMi(gym.GoalEnv):
             if is_target and is_table:
                 continue
             elif is_target:
+                continue
                 sim = self.sim
                 body1_cfrc = sim.data.cfrc_ext[bodyid1]
                 body1_contact_force_norm = np.sqrt(np.sum(np.square(body1_cfrc)))
@@ -468,7 +464,6 @@ class YuMi(gym.GoalEnv):
             else:
                 bad_collision = True
                 if bad_collision:
-                    print('root body is: ', root_bodyname1, root_bodyname2)
                     print('body is: ', bodyname1, bodyname2)
                     break
 
@@ -481,19 +476,22 @@ class YuMi(gym.GoalEnv):
         self.dynamics = self.generate_dynamics()
         fri, icom = self.dynamics
 
-        id = model.body_name2id('insidebox')
-        model.body_pos[id][-1] = icom
+        try:
+            id = model.body_name2id('insidebox')
+            model.body_pos[id][-1] = icom
 
-        for pair in range(model.npair):
-            tableid = model.geom_name2id('table')
-            targetid = model.geom_name2id('target')
-            if ((model.pair_geom1 == tableid and model.pair_geom2 == targetid) or
-               (model.pair_geom2 == tableid and model.pair_geom1 == targetid)):
+            for pair in range(model.npair):
+                tableid = model.geom_name2id('table')
+                targetid = model.geom_name2id('target')
+                if ((model.pair_geom1 == tableid and model.pair_geom2 == targetid) or
+                   (model.pair_geom2 == tableid and model.pair_geom1 == targetid)):
 
-                pair_friction = model.pair_friction[pair]
-                pair_friction[:2] = [fri, fri]
+                    pair_friction = model.pair_friction[pair]
+                    pair_friction[:2] = [fri, fri]
 
-        logging.debug('Dynamics: {}'.format(self.dynamics))
+            logging.debug('Dynamics: {}'.format(self.dynamics))
+        except:
+            pass
 
         self.sim.forward()
         return model

@@ -14,6 +14,7 @@ parser.add_argument('--render', help='render', default=False, action='store_true
 parser.add_argument('--checkpoint-path', help='path to previous checkpoint', type=str, default=None)
 parser.add_argument('--xml-path', help='path to model xml', default='models/cheezit.xml')
 parser.add_argument('--task', help='task to solve', default=0, type=int)
+parser.add_argument('--n_cpu', help='n cpus to use', default=1, type=int)
 parser.add_argument('--debug', help='to print debugging or not', default=False, action='store_true')
 
 args = parser.parse_args()
@@ -24,7 +25,7 @@ os.makedirs(log_dir, exist_ok=True)
 path = args.xml_path
 name = os.path.basename(path)
 
-n_cpu = 6
+n_cpu = args.n_cpu
 
 params  = [0.4, 0.08]
 
